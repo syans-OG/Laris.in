@@ -59,15 +59,18 @@ class PosGridPanel extends ConsumerWidget {
             hint: 'Ketik nama...',
             prefixIcon: Icons.search,
             suffixIcon: Icons.qr_code_scanner,
-            onSuffixTap: () async {
+            onSuffixTap: () {
               // Open Camera Scanner
-              final result = await Navigator.push<String>(
+              Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CameraScannerScreen()),
+                MaterialPageRoute(
+                  builder: (_) => CameraScannerScreen(
+                    onScan: (barcode) {
+                      handleBarcodeScanned(barcode);
+                    },
+                  ),
+                ),
               );
-              if (result != null) {
-                handleBarcodeScanned(result);
-              }
             },
             onChanged: (val) {
               ref.read(productsQueryProvider.notifier).state = val;

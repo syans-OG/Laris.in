@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../features/pos/presentation/screens/pos_screen.dart';
 import '../../../../features/products/presentation/screens/product_management_screen.dart';
 import '../../../../features/history/presentation/screens/history_screen.dart';
-import '../../../../features/settings/presentation/screens/printer_settings_screen.dart';
+import '../../../../features/settings/presentation/screens/settings_screen.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class MasterLayout extends StatefulWidget {
@@ -19,7 +19,7 @@ class _MasterLayoutState extends State<MasterLayout> {
     const PosScreen(),
     const ProductManagementScreen(),
     const HistoryScreen(),
-    const PrinterSettingsScreen(),
+    const SettingsScreen(),
   ];
 
   @override
@@ -57,8 +57,8 @@ class _MasterLayoutState extends State<MasterLayout> {
                       label: Text('Riwayat'),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.print),
-                      label: Text('Printer'),
+                      icon: Icon(Icons.settings),
+                      label: Text('Pengaturan'),
                     ),
                   ],
                 ),
@@ -97,8 +97,8 @@ class _MasterLayoutState extends State<MasterLayout> {
                 label: 'Riwayat',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.print),
-                label: 'Printer',
+                icon: Icon(Icons.settings),
+                label: 'Pengaturan',
               ),
             ],
           ),

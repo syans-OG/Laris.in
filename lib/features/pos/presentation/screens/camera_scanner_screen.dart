@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class CameraScannerScreen extends StatefulWidget {
-  const CameraScannerScreen({super.key});
+  final void Function(String)? onScan;
+
+  const CameraScannerScreen({super.key, this.onScan});
 
   @override
   State<CameraScannerScreen> createState() => _CameraScannerScreenState();
@@ -11,6 +14,8 @@ class CameraScannerScreen extends StatefulWidget {
 class _CameraScannerScreenState extends State<CameraScannerScreen> {
   late MobileScannerController controller;
   bool _isDisposed = false;
+  bool _isBatchMode = false;
+  DateTime _lastScanTime = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void initState() {
@@ -38,6 +43,17 @@ class _CameraScannerScreenState extends State<CameraScannerScreen> {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         actions: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Batch Scan', style: TextStyle(fontSize: 12, color: Colors.white)),
+              Switch(
+                value: _isBatchMode,
+                activeThumbColor: const Color(0xFF00E5A0),
+                onChanged: (val) => setState(() => _isBatchMode = val),
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.cameraswitch),
             onPressed: () => controller.switchCamera(),
@@ -55,9 +71,23 @@ class _CameraScannerScreenState extends State<CameraScannerScreen> {
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
                 if (barcode.rawValue != null) {
-                  // Avoid multiple pops during multi-capture
-                  _isDisposed = true;
-                  Navigator.pop(context, barcode.rawValue);
+                  final now = DateTime.now();
+                  if (now.difference(_lastScanTime).inMilliseconds < 1500) {
+                    continue;
+                  }
+                  
+                  _lastScanTime = now;
+                  
+                  if (widget.onScan != null) {
+                    widget.onScan!(barcode.rawValue!);
+                  }
+
+                  if (!_isBatchMode) {
+                    _isDisposed = true;
+                    Navigator.pop(context, barcode.rawValue);
+                  } else {
+                    HapticFeedback.vibrate();
+                  }
                   break;
                 }
               }
