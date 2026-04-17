@@ -1,0 +1,6 @@
+barcode,nama_produk,kategori,harga_jual,harga_beli,stok,satuan
+PROD-101,Produk Baru Satu,Makanan,15000,10000,50,pcs
+PROD-102,Produk Baru Dua,Minuman,12000,8000,30,pcs
+PROD-103,Produk Baru Tiga,Lainnya,5000,3000,100,pcs
+123456789,Indomie Goreng Update,Makanan,3500,2800,200,pcs
+PROD-ERR,Produk Tanpa Harga,Lainnya,,0,10,pcs
