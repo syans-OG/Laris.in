@@ -6,6 +6,8 @@ import '../../features/products/domain/repositories/category_repository.dart';
 import '../../features/products/domain/repositories/product_repository.dart';
 import '../../features/transactions/data/repositories/transaction_repository_impl.dart';
 import '../../features/transactions/domain/repositories/transaction_repository.dart';
+import '../../features/reports/data/repositories/report_repository_impl.dart';
+import '../../features/reports/domain/repositories/report_repository.dart';
 import '../database/app_database.dart';
 
 // Database Provider
@@ -29,4 +31,10 @@ final productRepositoryProvider = Provider<ProductRepository>((ref) {
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
   final db = ref.watch(databaseProvider);
   return TransactionRepositoryImpl(db);
+});
+
+// Report Repository Provider
+final reportRepositoryProvider = Provider<ReportRepository>((ref) {
+  final db = ref.watch(databaseProvider);
+  return ReportRepositoryImpl(db);
 });

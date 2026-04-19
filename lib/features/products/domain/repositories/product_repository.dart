@@ -6,4 +6,5 @@ abstract class ProductRepository {
   Future<void> saveProduct(ProductEntity product);
   Future<int> saveProductsBatch(List<ProductEntity> products);
   Future<void> deleteProduct(int id);
+  Future<void> updateStock(int productId, int newStock);
 }

@@ -116,6 +116,12 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
+  Future<void> updateStock(int productId, int newStock) async {
+    final db = await _db.database;
+    db.execute('UPDATE products SET stock = ? WHERE id = ?', [newStock, productId]);
+  }
+
+  @override
   Future<void> deleteProduct(int id) async {
     final db = await _db.database;
     // Soft delete per PRD logic

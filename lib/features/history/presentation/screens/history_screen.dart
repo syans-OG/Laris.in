@@ -5,40 +5,60 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../providers/history_provider.dart';
 
 class HistoryScreen extends ConsumerWidget {
-  const HistoryScreen({super.key});
+  final bool hideAppBar;
+  final int? cashierId;
+
+  const HistoryScreen({
+    super.key,
+    this.hideAppBar = false,
+    this.cashierId,
+  });
+
+  void _refresh(WidgetRef ref) {
+    ref.invalidate(historyProvider);
+    ref.invalidate(historyByCashierProvider);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final historyState = ref.watch(historyProvider);
+    final historyState = cashierId != null
+        ? ref.watch(historyByCashierProvider(cashierId))
+        : ref.watch(historyProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Riwayat Transaksi'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(historyProvider),
-          ),
-        ],
-      ),
-      body: historyState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error: \$err')),
-        data: (transactions) {
-          if (transactions.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.history, size: 64, color: AppColors.textMutedDark),
-                  const SizedBox(height: 16),
-                  Text('Belum ada transaksi', style: Theme.of(context).textTheme.titleLarge),
-                ],
-              ),
-            );
-          }
+    Widget body = historyState.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => Center(child: Text('Error: $err')),
+      data: (transactions) {
+        if (transactions.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: () async => _refresh(ref),
+            child: ListView(
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.5,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.history,
+                          size: 64, color: AppColors.textMutedDark),
+                      const SizedBox(height: 16),
+                      Text('Belum ada transaksi',
+                          style: Theme.of(context).textTheme.titleLarge),
+                      const SizedBox(height: 8),
+                      const Text('Tarik ke bawah untuk refresh',
+                          style: TextStyle(
+                              color: AppColors.textMutedDark, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
 
-          return ListView.separated(
+        return RefreshIndicator(
+          onRefresh: () async => _refresh(ref),
+          child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: transactions.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -50,7 +70,8 @@ class HistoryScreen extends ConsumerWidget {
 
               return Card(
                 color: AppColors.surfaceDark,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -72,7 +93,8 @@ class HistoryScreen extends ConsumerWidget {
                           const SizedBox(width: 8),
                           Text(
                             '${trx.createdAt.day}/${trx.createdAt.month}/${trx.createdAt.year}',
-                            style: const TextStyle(color: AppColors.textMutedDark),
+                            style: const TextStyle(
+                                color: AppColors.textMutedDark),
                           ),
                         ],
                       ),
@@ -92,34 +114,52 @@ class HistoryScreen extends ConsumerWidget {
                         ],
                       ),
                       if (trx.items != null && trx.items!.isNotEmpty) ...[
-                        const Divider(height: 24, color: AppColors.borderDark),
-                        const Text('Item:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Divider(
+                            height: 24, color: AppColors.borderDark),
+                        const Text('Item:',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         ...trx.items!.map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${item.qty}x ${item.product?.name ?? "Item ${item.id}"}',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${item.qty}x ${item.product?.name ?? "Item ${item.id}"}',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(CurrencyFormatter.format(item.subtotal)),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              Text(CurrencyFormatter.format(item.subtotal)),
-                            ],
-                          ),
-                        )),
-                      ]
+                            )),
+                      ],
                     ],
                   ),
                 ),
               );
             },
-          );
-        },
+          ),
+        );
+      },
+    );
+
+    if (hideAppBar) return body;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Riwayat Transaksi'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => _refresh(ref),
+          ),
+        ],
       ),
+      body: body,
     );
   }
 }
