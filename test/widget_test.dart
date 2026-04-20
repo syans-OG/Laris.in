@@ -5,27 +5,45 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:kasir_pro/main.dart';
+import 'package:kasir_pro/features/auth/domain/repositories/auth_repository.dart';
+import 'package:kasir_pro/features/auth/presentation/providers/auth_provider.dart';
+import 'package:kasir_pro/features/auth/domain/entities/cashier_entity.dart';
+
+class MockAuthRepository implements AuthRepository {
+  @override
+  Future<List<CashierEntity>> getActiveCashiers() async => [];
+  
+  @override
+  Future<bool> verifyPin(int cashierId, String pin) async => true;
+  
+  @override
+  Future<CashierEntity?> getCurrentUser() async => null;
+  
+  @override
+  Future<void> logout() async {}
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const ProviderScope(child: KasirKuProApp()));
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('App smoke test', (WidgetTester tester) async {
+    // Build our app with a mocked repository to avoid real DB/async issues.
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(MockAuthRepository()),
+        ],
+        child: const LarisInApp(),
+      ),
+    );
+    
+    // Initial pump to trigger the first frame.
     await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    
+    // We expect "Laris.in" to be visible immediately as it's a constant title.
+    expect(find.text('Laris.in'), findsOneWidget);
+    expect(find.text('Selamat datang, silakan login'), findsOneWidget);
   });
 }

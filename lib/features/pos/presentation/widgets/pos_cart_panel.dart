@@ -5,58 +5,61 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../providers/cart_provider.dart';
+import '../../../settings/data/settings_repository.dart';
 import 'checkout_modal.dart';
+import 'discount_bottom_sheet.dart';
 
 class PosCartPanel extends ConsumerWidget {
   final ScrollController? scrollController;
 
-  const PosCartPanel({
-    super.key,
-    this.scrollController,
-  });
+  const PosCartPanel({super.key, this.scrollController});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cartState = ref.watch(cartProvider);
     final notifier = ref.read(cartProvider.notifier);
+    final discountEnabled = ref.watch(discountEnabledProvider);
+    final taxEnabled = ref.watch(taxEnabledProvider);
 
     return Container(
       color: AppColors.surfaceDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header Cart
+          // ── Header ──────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Pesanan Saat Ini',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
+                Text('Pesanan Saat Ini',
+                    style: Theme.of(context).textTheme.headlineMedium),
                 if (cartState.items.isNotEmpty)
                   TextButton.icon(
                     onPressed: () => notifier.clearCart(),
-                    icon: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
-                    label: const Text('Kosongkan', style: TextStyle(color: AppColors.error)),
+                    icon: const Icon(Icons.delete_outline,
+                        color: AppColors.error, size: 20),
+                    label: const Text('Kosongkan',
+                        style: TextStyle(color: AppColors.error)),
                   ),
               ],
             ),
           ),
           const Divider(height: 1, color: AppColors.borderDark),
 
-          // ListView of Items
+          // ── Item List ────────────────────────────────────────────
           Expanded(
             child: cartState.items.isEmpty
                 ? const Center(
-                    child: Text('Keranjang Belanja Kosong', style: TextStyle(color: AppColors.textMutedDark)),
+                    child: Text('Keranjang Belanja Kosong',
+                        style:
+                            TextStyle(color: AppColors.textMutedDark)),
                   )
                 : ListView.separated(
                     controller: scrollController,
                     padding: const EdgeInsets.all(16),
                     itemCount: cartState.items.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final item = cartState.items[index];
                       return AppCard(
@@ -71,38 +74,45 @@ class PosCartPanel extends ConsumerWidget {
                                     item.product.name,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.titleMedium,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     CurrencyFormatter.format(item.product.price),
                                     style: const TextStyle(
-                                      color: AppColors.primary,
-                                    ),
+                                        color: AppColors.primary),
                                   ),
                                 ],
                               ),
                             ),
-                            // Qty Controller
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  onPressed: () => notifier.decreaseQty(item.product),
-                                  icon: const Icon(Icons.remove_circle_outline, size: 24),
+                                  onPressed: () =>
+                                      notifier.decreaseQty(item.product),
+                                  icon: const Icon(
+                                      Icons.remove_circle_outline,
+                                      size: 24),
                                   color: AppColors.textMutedDark,
                                   splashRadius: 20,
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  child: Text(
-                                    '${item.qty}',
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                  ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8),
+                                  child: Text('${item.qty}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium),
                                 ),
                                 IconButton(
-                                  onPressed: () => notifier.addProduct(item.product),
-                                  icon: const Icon(Icons.add_circle_outline, size: 24),
+                                  onPressed: () =>
+                                      notifier.addProduct(item.product),
+                                  icon: const Icon(
+                                      Icons.add_circle_outline,
+                                      size: 24),
                                   color: AppColors.primary,
                                   splashRadius: 20,
                                 ),
@@ -115,82 +125,123 @@ class PosCartPanel extends ConsumerWidget {
                   ),
           ),
 
-          // Total Panel
+          // ── Summary Panel ────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.surface2Dark,
-              border: const Border(top: BorderSide(color: AppColors.borderDark)),
+              border: Border(top: BorderSide(color: AppColors.borderDark)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Subtotal
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Subtotal:', style: TextStyle(color: AppColors.textMutedDark)),
-                    Text(
-                      CurrencyFormatter.format(cartState.subTotal),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                _SummaryRow(
+                  label: 'Subtotal',
+                  value: CurrencyFormatter.format(cartState.subTotal),
                 ),
-                
-                // Discount (User Decision: build but disable interactively for Sprint 1)
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+
+                // ── Diskon ──────────────────────────────────────────
+                if (discountEnabled) ...[
+                  const SizedBox(height: 8),
+                  if (cartState.discountAmount > 0) ...[
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Diskon', style: TextStyle(color: AppColors.textMutedDark)),
-                        const SizedBox(width: 8),
-                        Tooltip(
-                          message: 'Tersedia di update berikutnya',
-                          child: Icon(Icons.info_outline, size: 14, color: AppColors.textMutedDark.withOpacity(0.5)),
+                        Row(
+                          children: [
+                            const Text('Diskon',
+                                style: TextStyle(
+                                    color: AppColors.textMutedDark)),
+                            const SizedBox(width: 4),
+                            if (cartState.discountType ==
+                                DiscountType.percent)
+                              Text(
+                                '${cartState.discount.toStringAsFixed(0)}%',
+                                style: const TextStyle(
+                                    color: AppColors.textMutedDark,
+                                    fontSize: 12),
+                              ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              '- ${CurrencyFormatter.format(cartState.discountAmount)}',
+                              style: const TextStyle(
+                                  color: Colors.greenAccent,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: () => _openDiscount(context, ref),
+                              child: const Icon(Icons.edit,
+                                  size: 14,
+                                  color: AppColors.textMutedDark),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    Text(
-                      '- Rp 0',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textMutedDark.withOpacity(0.5),
-                          ),
+                  ] else ...[
+                    TextButton.icon(
+                      onPressed: cartState.items.isEmpty
+                          ? null
+                          : () => _openDiscount(context, ref),
+                      icon: const Icon(Icons.local_offer_outlined, size: 16),
+                      label: const Text('Tambah Diskon'),
+                      style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 32),
+                          tapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap),
                     ),
                   ],
-                ),
-                
-                // Note: Tax has been omitted entirely per Decision 03
+                ],
 
-                const SizedBox(height: 16),
+                // ── Pajak ────────────────────────────────────────────
+                if (taxEnabled && cartState.taxAmount > 0) ...[
+                  const SizedBox(height: 8),
+                  _SummaryRow(
+                    label:
+                        'Pajak (${cartState.taxRate.toStringAsFixed(0)}%)',
+                    value: CurrencyFormatter.format(cartState.taxAmount),
+                    valueColor: Colors.orangeAccent,
+                  ),
+                ],
+
+                const SizedBox(height: 12),
                 const Divider(color: AppColors.borderDark, height: 1),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Grand Total
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Total:', style: Theme.of(context).textTheme.headlineMedium),
+                    Text('Total:',
+                        style: Theme.of(context).textTheme.headlineMedium),
                     Text(
                       CurrencyFormatter.format(cartState.grandTotal),
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium
+                          ?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 AppButton(
                   text: 'Pembayaran',
                   isPrimary: true,
                   onPressed: cartState.items.isEmpty
-                      ? null // Standard flutter way to disable button if supported by AppButton
+                      ? null
                       : () async {
-                          final result = await showModalBottomSheet<bool>(
+                          final result =
+                              await showModalBottomSheet<bool>(
                             context: context,
                             isScrollControlled: true,
                             useSafeArea: true,
@@ -198,12 +249,10 @@ class PosCartPanel extends ConsumerWidget {
                           );
                           if (result == true && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Pembayaran berhasil!')),
+                              const SnackBar(
+                                  content:
+                                      Text('Pembayaran berhasil!')),
                             );
-                            // If this was a mobile bottom sheet cart, pop it too
-                            if (Navigator.canPop(context)) {
-                              // Navigator.pop(context); // Optional depending on exact mobile UX desired
-                            }
                           }
                         },
                 ),
@@ -212,6 +261,42 @@ class PosCartPanel extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _openDiscount(BuildContext context, WidgetRef ref) {
+    final cartState = ref.read(cartProvider);
+    showDiscountBottomSheet(
+      context: context,
+      currentDiscount: cartState.discount,
+      currentType: cartState.discountType,
+      subTotal: cartState.subTotal,
+      onSet: (value, type) =>
+          ref.read(cartProvider.notifier).setDiscount(value, type),
+      onClear: () => ref.read(cartProvider.notifier).clearDiscount(),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  const _SummaryRow({required this.label, required this.value, this.valueColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label,
+            style: const TextStyle(color: AppColors.textMutedDark)),
+        Text(value,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: valueColor)),
+      ],
     );
   }
 }

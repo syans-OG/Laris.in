@@ -13,7 +13,7 @@ class PosScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('KasirKu Pro'),
+        title: const Text('Laris.in'),
         centerTitle: false,
         actions: [
           // Top bar placeholder based on User Decision 01 "Default Admin"

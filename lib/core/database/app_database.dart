@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'migrations/migration_v2.dart';
+import 'migrations/migration_v3.dart';
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase._init();
@@ -38,8 +39,11 @@ class AppDatabase {
 
     if (currentVersion < 2) {
       MigrationV2.up(db);
-      db.execute('PRAGMA user_version = 2');
     }
+    if (currentVersion < 3) {
+      MigrationV3.up(db);
+    }
+    db.execute('PRAGMA user_version = 3');
 
     return db;
   }

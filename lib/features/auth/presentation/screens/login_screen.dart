@@ -59,12 +59,12 @@ class LoginScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         const Text(
-          'KasirKu Pro',
+          'Laris.in',
           style: TextStyle(
-            color: _accent,
-            fontSize: 24,
+            color: _textPrimary,
+            fontSize: 28,
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
+            letterSpacing: -1.0,
           ),
         ),
         const SizedBox(height: 8),

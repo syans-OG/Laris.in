@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import '../../../../features/products/domain/entities/product_entity.dart';
 
+enum DiscountType { nominal, percent }
+
 class CartItem extends Equatable {
   final ProductEntity product;
   final int qty;
@@ -10,14 +12,8 @@ class CartItem extends Equatable {
     required this.qty,
   });
 
-  CartItem copyWith({
-    ProductEntity? product,
-    int? qty,
-  }) {
-    return CartItem(
-      product: product ?? this.product,
-      qty: qty ?? this.qty,
-    );
+  CartItem copyWith({ProductEntity? product, int? qty}) {
+    return CartItem(product: product ?? this.product, qty: qty ?? this.qty);
   }
 
   double get subtotal => product.price * qty;
@@ -29,23 +25,27 @@ class CartItem extends Equatable {
 class CartState extends Equatable {
   final List<CartItem> items;
   final double discount;
-  final double tax;
+  final DiscountType discountType;
+  final double taxRate; // persentase, misal 11.0 untuk 11%
 
   const CartState({
     this.items = const [],
     this.discount = 0.0,
-    this.tax = 0.0,
+    this.discountType = DiscountType.nominal,
+    this.taxRate = 0.0,
   });
 
   CartState copyWith({
     List<CartItem>? items,
     double? discount,
-    double? tax,
+    DiscountType? discountType,
+    double? taxRate,
   }) {
     return CartState(
       items: items ?? this.items,
       discount: discount ?? this.discount,
-      tax: tax ?? this.tax,
+      discountType: discountType ?? this.discountType,
+      taxRate: taxRate ?? this.taxRate,
     );
   }
 
@@ -53,10 +53,21 @@ class CartState extends Equatable {
 
   double get subTotal => items.fold(0.0, (sum, item) => sum + item.subtotal);
 
-  // Per user decision 02: discount logic disabled for MVP (forced to 0) 
-  // Per user decision 03: tax logic disabled for MVP (forced to 0)
-  double get grandTotal => subTotal - discount + tax;
+  double get discountAmount {
+    if (discount <= 0) return 0.0;
+    if (discountType == DiscountType.percent) {
+      return (subTotal * discount / 100).clamp(0.0, subTotal);
+    }
+    return discount.clamp(0.0, subTotal);
+  }
+
+  double get taxAmount {
+    if (taxRate <= 0) return 0.0;
+    return (subTotal - discountAmount) * taxRate / 100;
+  }
+
+  double get grandTotal => subTotal - discountAmount + taxAmount;
 
   @override
-  List<Object?> get props => [items, discount, tax];
+  List<Object?> get props => [items, discount, discountType, taxRate];
 }

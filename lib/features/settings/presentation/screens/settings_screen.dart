@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../features/settings/data/settings_repository.dart';
 import 'printer_settings_screen.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // Mock states for UI
   bool _showStoreName = true;
   bool _showAddress = true;
@@ -120,6 +122,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const Divider(height: 1, color: AppColors.borderDark),
 
+          // ── TRANSAKSI ─────────────────────────────────────────
+          _buildSectionHeader('TRANSAKSI'),
+
+          // Toggle Pajak
+          Consumer(
+            builder: (context, ref, _) {
+              final enabled = ref.watch(taxEnabledProvider);
+              return SwitchListTile(
+                secondary: const Icon(Icons.receipt_long),
+                title: const Text('Aktifkan Pajak'),
+                subtitle: const Text('Pajak ditambahkan ke total belanja'),
+                value: enabled,
+                activeThumbColor: AppColors.primary,
+                activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+                onChanged: (val) async {
+                  await ref.read(settingsRepositoryProvider).setTaxEnabled(val);
+                  ref.read(taxEnabledProvider.notifier).state = val;
+                },
+              );
+            },
+          ),
+
+          // Input % Pajak
+          Consumer(
+            builder: (context, ref, _) {
+              final taxEnabled = ref.watch(taxEnabledProvider);
+              final taxRate = ref.watch(taxRateProvider);
+              if (!taxEnabled) return const SizedBox.shrink();
+              return ListTile(
+                leading: const Icon(Icons.percent),
+                title: const Text('Persentase Pajak'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('${taxRate.toStringAsFixed(0)}%',
+                        style:
+                            const TextStyle(color: AppColors.textMutedDark)),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.chevron_right),
+                  ],
+                ),
+                onTap: () => _showTaxRateDialog(context, ref, taxRate),
+              );
+            },
+          ),
+
+          // Toggle Diskon
+          Consumer(
+            builder: (context, ref, _) {
+              final enabled = ref.watch(discountEnabledProvider);
+              return SwitchListTile(
+                secondary: const Icon(Icons.local_offer_outlined),
+                title: const Text('Aktifkan Diskon'),
+                subtitle: const Text('Kasir bisa memberi diskon per transaksi'),
+                value: enabled,
+                activeThumbColor: AppColors.primary,
+                activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+                onChanged: (val) async {
+                  await ref
+                      .read(settingsRepositoryProvider)
+                      .setDiscountEnabled(val);
+                  ref.read(discountEnabledProvider.notifier).state = val;
+                },
+              );
+            },
+          ),
+          const Divider(height: 1, color: AppColors.borderDark),
+
           _buildSectionHeader('KASIR & AKUN'),
           ListTile(
             leading: const Icon(Icons.people),
@@ -208,5 +278,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _showTaxRateDialog(
+      BuildContext context, WidgetRef ref, double current) async {
+    final controller =
+        TextEditingController(text: current.toStringAsFixed(0));
+    final result = await showDialog<double>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Persentase Pajak'),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            suffixText: '%',
+            hintText: 'Contoh: 11',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final val = double.tryParse(controller.text);
+              if (val != null && val >= 0 && val <= 100) {
+                Navigator.pop(context, val);
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+    if (result != null) {
+      await ref.read(settingsRepositoryProvider).setTaxRate(result);
+      ref.read(taxRateProvider.notifier).state = result;
+    }
   }
 }

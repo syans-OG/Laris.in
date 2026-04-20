@@ -450,7 +450,10 @@ class DigitalReceiptCard extends StatelessWidget {
           _summaryRow('Subtotal', CurrencyFormatter.format(_subtotal)),
           if (transaction.discount > 0)
             _summaryRow('Diskon', '-${CurrencyFormatter.format(transaction.discount)}',
-                valueColor: const Color(0xFFFFB4AB)),
+                valueColor: const Color(0xFF81C784)),
+          if (transaction.tax > 0)
+            _summaryRow('Pajak', '+${CurrencyFormatter.format(transaction.tax)}',
+                valueColor: const Color(0xFFFFB74D)),
           _summaryRow('TOTAL', CurrencyFormatter.format(transaction.total),
               bold: true, valueColor: const Color(0xFF00E5A0)),
 
