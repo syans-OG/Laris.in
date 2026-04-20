@@ -5,6 +5,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../providers/cart_provider.dart';
+import '../models/cart_state.dart';
 import '../../../settings/data/settings_repository.dart';
 import 'checkout_modal.dart';
 import 'discount_bottom_sheet.dart';
