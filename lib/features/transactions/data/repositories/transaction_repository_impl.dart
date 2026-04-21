@@ -95,8 +95,24 @@ class TransactionRepositoryImpl implements TransactionRepository {
             item.subtotal,
           ]);
 
-          // Decrease product stock accordingly
+          // Decrease product stock
           db.execute('UPDATE products SET stock = stock - ? WHERE id = ?', [item.qty, item.productId]);
+
+          // Log the stock change
+          final stockResult = db.select('SELECT stock FROM products WHERE id = ? LIMIT 1', [item.productId]);
+          final totalAfter = stockResult.first['stock'] as int;
+
+          db.execute('''
+            INSERT INTO stock_logs (product_id, type, qty_change, total_after, note, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+          ''', [
+            item.productId,
+            'penjualan',
+            -item.qty,
+            totalAfter,
+            'Invoice: ${transaction.invoiceNo}',
+            DateTime.now().toIso8601String(),
+          ]);
         }
       }
 
@@ -125,5 +141,12 @@ class TransactionRepositoryImpl implements TransactionRepository {
           print_method = ?
       WHERE id = ?
     ''', [isPrinted, printedAt, printMethod, transactionId]);
+  }
+
+  @override
+  Future<void> deleteAllTransactions() async {
+    final db = await _db.database;
+    db.execute('DELETE FROM transaction_items');
+    db.execute('DELETE FROM transactions');
   }
 }

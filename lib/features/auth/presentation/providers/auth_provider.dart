@@ -4,8 +4,11 @@ import '../../domain/entities/cashier_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 
+import '../../../../core/di/providers.dart';
+
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepositoryImpl();
+  final db = ref.read(databaseProvider);
+  return AuthRepositoryImpl(db);
 });
 
 final sessionProvider = StateProvider<CashierEntity?>((ref) => null);
@@ -103,6 +106,59 @@ class LoginViewModel extends ChangeNotifier {
     } finally {
       isLoading = false;
       notifyListeners();
+    }
+  }
+}
+
+// ── Cashier Management ───────────────────────────────────────────────────────
+
+final cashierListProvider = FutureProvider.autoDispose<List<CashierEntity>>((ref) {
+  return ref.watch(authRepositoryProvider).getActiveCashiers();
+});
+
+final cashierManagementProvider = ChangeNotifierProvider.autoDispose<CashierManagementViewModel>((ref) {
+  return CashierManagementViewModel(ref.read(authRepositoryProvider), ref);
+});
+
+class CashierManagementViewModel extends ChangeNotifier {
+  final AuthRepository _repository;
+  final Ref _ref;
+
+  CashierManagementViewModel(this._repository, this._ref);
+
+  bool isLoading = false;
+
+  Future<void> addCashier(String name, String pin, String role) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      await _repository.addUser(name, pin, role);
+      _ref.invalidate(cashierListProvider);
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeCashier(int id) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      await _repository.deleteUser(id);
+      _ref.invalidate(cashierListProvider);
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updatePin(int id, String newPin) async {
+    await _repository.updatePin(id, newPin);
+    if (_ref.read(sessionProvider)?.id == id) {
+      final user = _ref.read(sessionProvider);
+      if (user != null) {
+        _ref.read(sessionProvider.notifier).state = user.copyWith(pin: newPin);
+      }
     }
   }
 }

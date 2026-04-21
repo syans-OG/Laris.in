@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../reports/presentation/screens/sales_report_screen.dart';
-import '../../../stock/presentation/screens/stock_management_screen.dart';
 import 'riwayat_admin_screen.dart';
 
 const _background = Color(0xFF0E1015);
@@ -13,22 +12,21 @@ class LaporanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         backgroundColor: _background,
         appBar: AppBar(
           title: const Text('Laporan'),
           backgroundColor: _background,
           elevation: 0,
-          bottom: TabBar(
+          bottom: const TabBar(
             labelColor: _accent,
             unselectedLabelColor: _textMuted,
             indicatorColor: _accent,
             indicatorSize: TabBarIndicatorSize.label,
-            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            tabs: const [
+            labelStyle: TextStyle(fontWeight: FontWeight.bold),
+            tabs: [
               Tab(text: 'Penjualan'),
-              Tab(text: 'Stok'),
               Tab(text: 'Riwayat'),
             ],
           ),
@@ -36,7 +34,6 @@ class LaporanScreen extends StatelessWidget {
         body: const TabBarView(
           children: [
             SalesReportScreen(hideAppBar: true),
-            StockManagementScreen(hideAppBar: true),
             RiwayatAdminScreen(),
           ],
         ),

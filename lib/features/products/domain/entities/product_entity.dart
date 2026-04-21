@@ -11,6 +11,8 @@ class ProductEntity extends Equatable {
   final String? imageUrl;
   final bool isActive;
 
+  final int lowStockThreshold;
+
   const ProductEntity({
     required this.id,
     required this.barcode,
@@ -21,6 +23,7 @@ class ProductEntity extends Equatable {
     this.categoryId,
     this.imageUrl,
     this.isActive = true,
+    this.lowStockThreshold = 5,
   });
 
   ProductEntity copyWith({
@@ -33,6 +36,7 @@ class ProductEntity extends Equatable {
     int? categoryId,
     String? imageUrl,
     bool? isActive,
+    int? lowStockThreshold,
   }) {
     return ProductEntity(
       id: id ?? this.id,
@@ -44,6 +48,7 @@ class ProductEntity extends Equatable {
       categoryId: categoryId ?? this.categoryId,
       imageUrl: imageUrl ?? this.imageUrl,
       isActive: isActive ?? this.isActive,
+      lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
     );
   }
 
@@ -58,6 +63,7 @@ class ProductEntity extends Equatable {
       categoryId: json['category_id'] as int?,
       imageUrl: json['image_url'] as String?,
       isActive: json['is_active'] == 1 || json['is_active'] == true,
+      lowStockThreshold: json['low_stock_threshold'] as int? ?? 5,
     );
   }
 
@@ -72,6 +78,7 @@ class ProductEntity extends Equatable {
       'category_id': categoryId,
       'image_url': imageUrl,
       'is_active': isActive ? 1 : 0,
+      'low_stock_threshold': lowStockThreshold,
     };
   }
 
@@ -86,5 +93,6 @@ class ProductEntity extends Equatable {
         categoryId,
         imageUrl,
         isActive,
+        lowStockThreshold,
       ];
 }

@@ -1,26 +1,37 @@
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import '../../../../features/transactions/domain/entities/transaction_entity.dart';
+import '../../../../features/settings/data/settings_repository.dart';
 
 class ReceiptGenerator {
   /// Generates the byte format for ESC/POS thermal printers
-  static Future<List<int>> generateReceipt(TransactionEntity transaction) async {
+  static Future<List<int>> generateReceipt(
+    TransactionEntity transaction,
+    SettingsRepository settings,
+  ) async {
     final profile = await CapabilityProfile.load();
     // Default 58mm printer
     final generator = Generator(PaperSize.mm58, profile);
     List<int> bytes = [];
 
     // Header
-    bytes += generator.text(
-      'KASIRKU PRO',
-      styles: const PosStyles(
-        align: PosAlign.center,
-        height: PosTextSize.size2,
-        width: PosTextSize.size2,
-        bold: true,
-      ),
-    );
-    bytes += generator.text('Toko Kasir Modern', styles: const PosStyles(align: PosAlign.center));
-    bytes += generator.text('Jl. Cempaka Raya No. 42', styles: const PosStyles(align: PosAlign.center));
+    if (settings.showStoreName) {
+      bytes += generator.text(
+        settings.storeName.toUpperCase(),
+        styles: const PosStyles(
+          align: PosAlign.center,
+          height: PosTextSize.size2,
+          width: PosTextSize.size2,
+          bold: true,
+        ),
+      );
+    }
+
+    if (settings.showAddress) {
+      bytes += generator.text(settings.storeAddress,
+          styles: const PosStyles(align: PosAlign.center));
+      bytes += generator.text('Telp: ${settings.storePhone}',
+          styles: const PosStyles(align: PosAlign.center));
+    }
     
     bytes += generator.feed(1);
     bytes += generator.hr();
@@ -116,8 +127,10 @@ class ReceiptGenerator {
     bytes += generator.hr();
     
     // Footer
-    bytes += generator.text('Terima Kasih', styles: const PosStyles(align: PosAlign.center, bold: true));
-    bytes += generator.text('Silakan Berkunjung Kembali', styles: const PosStyles(align: PosAlign.center));
+    bytes += generator.text(settings.storeFooter,
+        styles: const PosStyles(align: PosAlign.center, bold: true));
+    bytes += generator.text('Dicetak oleh Laris.in',
+        styles: const PosStyles(align: PosAlign.center, fontType: PosFontType.fontB));
     
     // Feed space to cut/tear
     bytes += generator.feed(3);

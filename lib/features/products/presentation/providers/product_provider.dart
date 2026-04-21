@@ -1,3 +1,4 @@
+import '../../domain/entities/stock_log_entity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/providers.dart';
 import '../../domain/entities/product_entity.dart';
@@ -49,6 +50,22 @@ class ProductNotifier extends StateNotifier<AsyncValue<List<ProductEntity>>> {
         searchQuery: _ref.read(productsQueryProvider),
         categoryId: _ref.read(productsCategoryFilterProvider),
       );
+      // Also refresh logs if any
+      _ref.invalidate(stockLogsProvider);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> updateStock(int productId, int qtyChange, {String type = 'penyesuaian', String? note}) async {
+    try {
+      final repository = _ref.read(productRepositoryProvider);
+      await repository.updateStock(productId, qtyChange, type: type, note: note);
+      await loadProducts(
+        searchQuery: _ref.read(productsQueryProvider),
+        categoryId: _ref.read(productsCategoryFilterProvider),
+      );
+      _ref.invalidate(stockLogsProvider);
     } catch (e) {
       rethrow;
     }
@@ -67,3 +84,16 @@ class ProductNotifier extends StateNotifier<AsyncValue<List<ProductEntity>>> {
     }
   }
 }
+
+final lowStockProductsProvider = Provider<AsyncValue<List<ProductEntity>>>((ref) {
+  final productsAsync = ref.watch(productsProvider);
+  return productsAsync.whenData((products) {
+    return products.where((p) => p.stock <= p.lowStockThreshold).toList();
+  });
+});
+
+final stockLogsProvider = FutureProvider<List<StockLogEntity>>((ref) async {
+  final repository = ref.read(productRepositoryProvider);
+  return await repository.getStockLogs();
+});
+

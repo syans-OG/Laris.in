@@ -5,6 +5,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'migrations/migration_v2.dart';
 import 'migrations/migration_v3.dart';
+import 'migrations/migration_v4.dart';
+import 'migrations/migration_v5.dart';
+
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase._init();
@@ -40,12 +43,16 @@ class AppDatabase {
     if (currentVersion < 2) {
       MigrationV2.up(db);
     }
-    if (currentVersion < 3) {
-      MigrationV3.up(db);
+    if (currentVersion < 4) {
+      MigrationV4.up(db);
     }
-    db.execute('PRAGMA user_version = 3');
+    if (currentVersion < 5) {
+      MigrationV5.up(db);
+    }
+    db.execute('PRAGMA user_version = 5');
 
     return db;
+
   }
 
   void _createAllTables(Database db) {
@@ -71,9 +78,23 @@ class AppDatabase {
         stock INTEGER DEFAULT 0,
         category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
         image_url TEXT,
-        is_active INTEGER DEFAULT 1
+        is_active INTEGER DEFAULT 1,
+        low_stock_threshold INTEGER DEFAULT 5
       )
     ''');
+
+    db.execute('''
+      CREATE TABLE IF NOT EXISTS stock_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        type TEXT NOT NULL,
+        qty_change INTEGER NOT NULL,
+        total_after INTEGER NOT NULL,
+        note TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
 
     db.execute('''
       CREATE TABLE IF NOT EXISTS users (

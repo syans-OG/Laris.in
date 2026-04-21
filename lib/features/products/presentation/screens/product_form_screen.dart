@@ -25,6 +25,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late TextEditingController _stockController;
   late TextEditingController _costPriceController;
   late TextEditingController _imageUrlController;
+  late TextEditingController _lowStockController;
 
   int? _selectedCategoryId;
   bool _isActive = true;
@@ -40,6 +41,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _stockController = TextEditingController(text: p?.stock.toString() ?? '0');
     _costPriceController = TextEditingController(text: p?.costPrice?.toStringAsFixed(0) ?? '');
     _imageUrlController = TextEditingController(text: p?.imageUrl ?? '');
+    _lowStockController = TextEditingController(text: p?.lowStockThreshold.toString() ?? '5');
 
     _selectedCategoryId = p?.categoryId;
     _isActive = p?.isActive ?? true;
@@ -53,6 +55,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     _stockController.dispose();
     _costPriceController.dispose();
     _imageUrlController.dispose();
+    _lowStockController.dispose();
     super.dispose();
   }
 
@@ -73,6 +76,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         categoryId: _selectedCategoryId,
         imageUrl: _imageUrlController.text.trim().isEmpty ? null : _imageUrlController.text.trim(),
         isActive: _isActive,
+        lowStockThreshold: int.parse(_lowStockController.text.trim()),
       );
 
       await ref.read(productsProvider.notifier).saveProduct(newProduct);
@@ -86,7 +90,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: \$e')),
+          SnackBar(content: Text('Gagal: $e')),
         );
       }
     } finally {
@@ -125,7 +129,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               
               Row(
                 children: [
-                  Expanded(
+                   Expanded(
                     child: AppTextInput(
                       label: 'Harga Jual',
                       controller: _priceController,
@@ -149,44 +153,52 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 children: [
                   Expanded(
                     child: AppTextInput(
-                      label: 'Stok',
+                      label: 'Stok Saat Ini',
                       controller: _stockController,
                       keyboardType: TextInputType.number,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Kategori', style: Theme.of(context).textTheme.labelMedium),
-                        const SizedBox(height: 8),
-                        categoriesState.when(
-                          loading: () => const LinearProgressIndicator(),
-                          error: (_, __) => const Text('Error load kategory'),
-                          data: (categories) {
-                            return DropdownButtonFormField<int>(
-                              isExpanded: true,
-                              value: _selectedCategoryId,
-                              decoration: const InputDecoration(filled: true),
-                              items: [
-                                const DropdownMenuItem<int>(
-                                  value: null,
-                                  child: Text('Tanpa Kategori'),
-                                ),
-                                ...categories.map((c) => DropdownMenuItem(
-                                  value: c.id,
-                                  child: Text(c.name),
-                                )),
-                              ],
-                              onChanged: (val) {
-                                setState(() => _selectedCategoryId = val);
-                              },
-                            );
-                          },
-                        ),
-                      ],
+                    child: AppTextInput(
+                      label: 'Batas Stok Menipis',
+                      controller: _lowStockController,
+                      keyboardType: TextInputType.number,
+                      hint: 'Default: 5',
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Kategori', style: Theme.of(context).textTheme.labelMedium),
+                  const SizedBox(height: 8),
+                  categoriesState.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (_, __) => const Text('Error load category'),
+                    data: (categories) {
+                      return DropdownButtonFormField<int>(
+                        isExpanded: true,
+                        value: _selectedCategoryId,
+                        decoration: const InputDecoration(filled: true),
+                        items: [
+                          const DropdownMenuItem<int>(
+                            value: null,
+                            child: Text('Tanpa Kategori'),
+                          ),
+                          ...categories.map((c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text(c.name),
+                          )),
+                        ],
+                        onChanged: (val) {
+                          setState(() => _selectedCategoryId = val);
+                        },
+                      );
+                    },
                   ),
                 ],
               ),
@@ -217,7 +229,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   text: 'Hapus',
                   isPrimary: false,
                   onPressed: () async {
-                    // Quick confirm delete logic
                     final conf = await showDialog<bool>(
                       context: context,
                       builder: (c) => AlertDialog(

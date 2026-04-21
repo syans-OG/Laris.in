@@ -13,4 +13,20 @@ class CashierEntity {
     required this.role,
     required this.pin,
   });
+
+  CashierEntity copyWith({
+    int? id,
+    String? name,
+    String? avatarUrl,
+    String? role,
+    String? pin,
+  }) {
+    return CashierEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      role: role ?? this.role,
+      pin: pin ?? this.pin,
+    );
+  }
 }

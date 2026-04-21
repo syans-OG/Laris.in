@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../settings/data/settings_repository.dart';
 import '../../../../features/transactions/domain/entities/transaction_entity.dart';
 import '../../../../shared/presentation/layouts/master_layout.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -352,7 +354,7 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
   }
 }
 
-class DigitalReceiptCard extends StatelessWidget {
+class DigitalReceiptCard extends ConsumerWidget {
   final TransactionEntity transaction;
   const DigitalReceiptCard({
     super.key,
@@ -362,7 +364,15 @@ class DigitalReceiptCard extends StatelessWidget {
   double get _subtotal => (transaction.items ?? []).fold(0, (sum, item) => sum + item.subtotal);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final showLogo = ref.watch(showLogoProvider);
+    final logoPath = ref.watch(logoPathProvider);
+    final showName = ref.watch(showStoreNameProvider);
+    final storeName = ref.watch(storeNameProvider);
+    final showAddress = ref.watch(showAddressProvider);
+    final storeAddress = ref.watch(storeAddressProvider);
+    final storePhone = ref.watch(storePhoneProvider);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -381,6 +391,46 @@ class DigitalReceiptCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Store Identity Header
+          if (showLogo) ...[
+            if (logoPath != null && File(logoPath).existsSync())
+              Image.file(File(logoPath), width: 64, height: 64, fit: BoxFit.contain)
+            else
+              Image.asset('assets/images/logo.png', width: 64, height: 64, fit: BoxFit.contain),
+            const SizedBox(height: 12),
+          ],
+          if (showName) ...[
+            Text(
+              storeName.toUpperCase(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2.0,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+          ],
+          if (showAddress) ...[
+            Text(
+              storeAddress,
+              style: const TextStyle(color: Color(0xFF84958A), fontSize: 11),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              'Telp: $storePhone',
+              style: const TextStyle(color: Color(0xFF84958A), fontSize: 11),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          if (showName || showAddress || showLogo) ...[
+            _buildDashedDivider(),
+            const SizedBox(height: 24),
+          ],
+
           // "TOTAL PEMBAYARAN" Label
           const Text(
             'TOTAL PEMBAYARAN',
@@ -499,6 +549,21 @@ class DigitalReceiptCard extends StatelessWidget {
               ],
             ),
           ),
+          
+          if (ref.watch(storeFooterProvider).isNotEmpty) ...[
+            const SizedBox(height: 24),
+            _buildDashedDivider(),
+            const SizedBox(height: 16),
+            Text(
+              ref.watch(storeFooterProvider),
+              style: const TextStyle(
+                color: Color(0xFF84958A),
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ],
       ),
     );

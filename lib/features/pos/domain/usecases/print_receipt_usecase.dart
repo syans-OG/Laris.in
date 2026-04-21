@@ -4,6 +4,7 @@ import '../../../../core/services/printer/printer_service.dart';
 import '../../../../core/services/printer/receipt_generator.dart';
 import '../../../transactions/domain/entities/transaction_entity.dart';
 import '../../../transactions/domain/repositories/transaction_repository.dart';
+import '../../../settings/data/settings_repository.dart';
 import '../../../../core/di/providers.dart';
 
 enum PrintResult { success, failed, noPrinter, timeout }
@@ -11,14 +12,16 @@ enum PrintResult { success, failed, noPrinter, timeout }
 final printReceiptUseCaseProvider = Provider<PrintReceiptUseCase>((ref) {
   final printerService = ref.read(printerServiceProvider);
   final repository = ref.read(transactionRepositoryProvider);
-  return PrintReceiptUseCase(printerService, repository);
+  final settings = ref.read(settingsRepositoryProvider);
+  return PrintReceiptUseCase(printerService, repository, settings);
 });
 
 class PrintReceiptUseCase {
   final PrinterService _printerService;
   final TransactionRepository _repository;
+  final SettingsRepository _settings;
 
-  PrintReceiptUseCase(this._printerService, this._repository);
+  PrintReceiptUseCase(this._printerService, this._repository, this._settings);
 
   Future<PrintResult> execute(TransactionEntity transaction) async {
     try {
@@ -33,7 +36,7 @@ class PrintReceiptUseCase {
       }
 
       // 2. Generate ESC/POS bytes
-      final bytes = await ReceiptGenerator.generateReceipt(transaction);
+      final bytes = await ReceiptGenerator.generateReceipt(transaction, _settings);
 
       // 3. Kirim ke printer dengan timeout
       final isSuccess = await _printerService

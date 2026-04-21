@@ -45,16 +45,18 @@ class LoginScreen extends ConsumerWidget {
     return Column(
       children: [
         Container(
-          width: 64,
-          height: 64,
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
-            color: _accent,
-            borderRadius: BorderRadius.circular(16),
+            color: Colors.transparent, // Background accent removed since logo is here
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: const Icon(
-            Icons.storefront,
-            color: _background,
-            size: 32,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         const SizedBox(height: 16),

@@ -10,4 +10,5 @@ abstract class TransactionRepository {
     required String? printedAt,
     required String? printMethod,
   });
+  Future<void> deleteAllTransactions();
 }

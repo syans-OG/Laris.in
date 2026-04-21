@@ -25,6 +25,18 @@ class MockAuthRepository implements AuthRepository {
   
   @override
   Future<void> logout() async {}
+
+  @override
+  Future<void> updatePin(int cashierId, String newPin) async {}
+
+  @override
+  Future<void> addUser(String name, String pin, String role) async {}
+
+  @override
+  Future<void> deleteUser(int cashierId) async {}
+
+  @override
+  Future<void> updateUser(int cashierId, String name, String role) async {}
 }
 
 void main() {
