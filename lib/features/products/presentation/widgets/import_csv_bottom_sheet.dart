@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../domain/usecases/import_csv_usecase.dart';
 import '../providers/product_provider.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class ImportCsvBottomSheet extends ConsumerStatefulWidget {
   const ImportCsvBottomSheet({super.key});
@@ -112,13 +113,24 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       decoration: const BoxDecoration(
-        color: Color(0xFF1E1F26),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: AppColors.borderLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -127,12 +139,12 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppColors.textPrimaryLight,
                 ),
               ),
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close, color: Color(0xFFBACBBF)),
+                icon: const Icon(Icons.close, color: AppColors.textMutedLight),
               ),
             ],
           ),
@@ -145,13 +157,13 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
             // STATE LOADING
             const SizedBox(height: 32),
             const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00E5A0)),
+              child: CircularProgressIndicator(color: AppColors.primary),
             ),
             const SizedBox(height: 16),
             const Center(
               child: Text(
                 'Mengimpor Data...',
-                style: TextStyle(color: Color(0xFFBACBBF)),
+                style: TextStyle(color: AppColors.textMutedLight),
               ),
             ),
             const SizedBox(height: 32),
@@ -162,8 +174,8 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
               icon: const Icon(Icons.download_rounded, size: 18),
               label: const Text('Download Template CSV'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF00E5A0),
-                side: BorderSide(color: const Color(0xFF00E5A0).withOpacity(0.5)),
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.borderLight),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -174,8 +186,8 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
               icon: const Icon(Icons.attach_file_rounded, size: 18),
               label: Text(_selectedFile != null ? 'Ganti File CSV' : 'Pilih File CSV'),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF33343B),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.surface2Light,
+                foregroundColor: AppColors.textPrimaryLight,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -186,20 +198,20 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0C0E14),
+                  color: AppColors.backgroundLight,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF3B4A41).withOpacity(0.5)),
+                  border: Border.all(color: AppColors.borderLight),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.file_present_rounded, color: Color(0xFF00E5A0), size: 24),
+                        const Icon(Icons.file_present_rounded, color: AppColors.primary, size: 24),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             _selectedFile!.path.split(Platform.pathSeparator).last,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: AppColors.textPrimaryLight, fontWeight: FontWeight.bold),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -208,7 +220,7 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
                     const SizedBox(height: 8),
                     Text(
                       '$_estimatedLines baris data terdeteksi',
-                      style: const TextStyle(color: Color(0xFF84958A), fontSize: 13),
+                      style: const TextStyle(color: AppColors.textMutedLight, fontSize: 13),
                     ),
                   ],
                 ),
@@ -217,8 +229,8 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
               FilledButton(
                 onPressed: _estimatedLines > 0 ? _startImport : null,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF00E5A0),
-                  foregroundColor: const Color(0xFF006141),
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -238,26 +250,27 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF0C0E14),
+            color: AppColors.backgroundLight,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.borderLight),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.check_circle_rounded, color: Color(0xFF00E5A0), size: 20),
+                  const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
                   const SizedBox(width: 8),
-                  Text('${_result!.successCount} produk berhasil diimport', style: const TextStyle(color: Colors.white)),
+                  Text('${_result!.successCount} produk berhasil diimport', style: const TextStyle(color: AppColors.textPrimaryLight)),
                 ],
               ),
               if (_result!.updatedCount > 0) ...[
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.info_rounded, color: Color(0xFFFFB347), size: 20),
+                    const Icon(Icons.info_rounded, color: Colors.orange, size: 20),
                     const SizedBox(width: 8),
-                    Text('${_result!.updatedCount} produk diperbarui', style: const TextStyle(color: Colors.white)),
+                    Text('${_result!.updatedCount} produk diperbarui', style: const TextStyle(color: AppColors.textPrimaryLight)),
                   ],
                 ),
               ],
@@ -266,17 +279,17 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.cancel_rounded, color: Color(0xFFFFB4AB), size: 20),
+                    const Icon(Icons.cancel_rounded, color: AppColors.error, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('${_result!.errors.length} baris gagal:', style: const TextStyle(color: Color(0xFFFFB4AB))),
+                          Text('${_result!.errors.length} baris gagal:', style: const TextStyle(color: AppColors.error)),
                           const SizedBox(height: 4),
-                          ..._result!.errors.take(5).map((e) => Text('- $e', style: const TextStyle(color: Color(0xFFBACBBF), fontSize: 12))),
+                          ..._result!.errors.take(5).map((e) => Text('- $e', style: const TextStyle(color: AppColors.textMutedLight, fontSize: 12))),
                           if (_result!.errors.length > 5)
-                            Text('...dan ${_result!.errors.length - 5} error lainnya', style: const TextStyle(color: Color(0xFF84958A), fontSize: 12)),
+                            Text('...dan ${_result!.errors.length - 5} error lainnya', style: const TextStyle(color: AppColors.textMutedLight, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -290,8 +303,8 @@ class _ImportCsvBottomSheetState extends ConsumerState<ImportCsvBottomSheet> {
         FilledButton(
           onPressed: () => Navigator.of(context).pop(),
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF33343B),
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.surface2Light,
+            foregroundColor: AppColors.textPrimaryLight,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),

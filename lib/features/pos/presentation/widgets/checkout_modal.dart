@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -61,7 +62,6 @@ class _CheckoutModalState extends ConsumerState<CheckoutModal> {
         );
       }
 
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -86,106 +86,260 @@ class _CheckoutModalState extends ConsumerState<CheckoutModal> {
     final isSufficient = _cashReceived >= grandTotal;
 
     return Padding(
-      // Ensure it floats above keyboard
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        padding: const EdgeInsets.all(24.0),
-        decoration: const BoxDecoration(
-          color: AppColors.surfaceDark,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Pembayaran',
-              style: Theme.of(context).textTheme.headlineMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            
-            // Total Amount Summary
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface2Dark,
-                borderRadius: BorderRadius.circular(12),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            boxShadow: [
+              BoxShadow(
+                color: Color.fromRGBO(0, 33, 20, 0.08),
+                blurRadius: 24,
+                offset: Offset(0, -12),
+              )
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Top drag indicator
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 32),
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE7E8E9),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-              child: Column(
-                children: [
-                  const Text('Total Tagihan', style: TextStyle(color: AppColors.textMutedDark)),
-                  const SizedBox(height: 8),
-                  Text(
-                    CurrencyFormatter.format(grandTotal),
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: AppColors.primary,
+              
+              // Title
+              const Text(
+                'Pembayaran',
+                style: TextStyle(
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 24,
+                  color: Color(0xFF191C1D),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              
+              // Total Amount Summary (Hero area)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F9FA),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      'TOTAL TAGIHAN', 
+                      style: TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
+                        color: Color(0xFF3D4A42),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                      )
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      CurrencyFormatter.format(grandTotal),
+                      style: const TextStyle(
+                        fontFamily: 'Space Mono',
+                        fontSize: 36,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Cash Input
+              const Text(
+                'Tunai Diterima',
+                style: TextStyle(
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Color(0xFF3D4A42),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color.fromRGBO(188, 202, 192, 0.4), width: 1.5),
+                ),
+                child: Row(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 20, right: 12),
+                      child: Text(
+                        'Rp',
+                        style: TextStyle(
+                          fontFamily: 'Space Mono',
                           fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          color: Color(0xFF3D4A42),
                         ),
+                      ),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: _cashController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(
+                          fontFamily: 'Space Mono',
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF191C1D),
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          hintText: '0',
+                          hintStyle: TextStyle(
+                            color: Color(0xFFBCCAC0),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onChanged: (val) {
+                          setState(() {
+                            _cashReceived = double.tryParse(val) ?? 0.0;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Change Info
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Kembalian', 
+                    style: TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: Color(0xFF3D4A42)
+                    )
+                  ),
+                  Flexible(
+                    child: Text(
+                      change < 0 ? 'Kurang Bayar' : CurrencyFormatter.format(change),
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Space Mono',
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: change < 0 ? const Color(0xFFBA1A1A) : const Color(0xFF191C1D),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 40),
 
-            // Cash Input
-            AppTextInput(
-              label: 'Tunai Diterima (Cash)',
-              controller: _cashController,
-              keyboardType: TextInputType.number,
-              prefixIcon: Icons.money,
-              onChanged: (val) {
-                setState(() {
-                  _cashReceived = double.tryParse(val) ?? 0.0;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Change Info
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Kembalian:', style: TextStyle(fontSize: 16)),
-                Flexible(
-                  child: Text(
-                    change < 0 ? 'Kurang Bayar!' : CurrencyFormatter.format(change),
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: change < 0 ? AppColors.error : AppColors.success,
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'Batal',
+                        style: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: Color(0xFF3D4A42),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    text: 'Batal',
-                    isPrimary: false,
-                    onPressed: () => Navigator.pop(context),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: isSufficient 
+                          ? const LinearGradient(
+                              colors: [Color(0xFF006948), Color(0xFF00855D)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                        color: isSufficient ? null : const Color(0xFFE7E8E9),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: isSufficient ? const [
+                          BoxShadow(
+                            color: Color.fromRGBO(0, 105, 72, 0.2),
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ] : null,
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: isSufficient ? () => _processPayment(grandTotal) : null,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            child: Center(
+                              child: _isLoading
+                                ? const SizedBox(
+                                    height: 20, width: 20,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : Text(
+                                    'Proses Transaksi',
+                                    style: TextStyle(
+                                      fontFamily: 'Plus Jakarta Sans',
+                                      fontWeight: FontWeight.bold,
+                                      color: isSufficient ? Colors.white : const Color(0xFFBCCAC0),
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 2,
-                  child: AppButton(
-                    text: 'Proses Transaksi',
-                    isLoading: _isLoading,
-                    onPressed: isSufficient ? () => _processPayment(grandTotal) : null,
-                  ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
+}
+

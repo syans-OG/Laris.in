@@ -11,51 +11,89 @@ class ManageCashiersScreen extends ConsumerWidget {
     final cashierList = ref.watch(cashierListProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('Kelola Kasir'),
-        backgroundColor: Colors.transparent,
+        title: const Text(
+          'Kelola Kasir',
+          style: TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF191C1D),
+          ),
+        ),
+        backgroundColor: const Color(0xFFF8F9FA),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF191C1D)),
       ),
       body: cashierList.when(
         data: (cashiers) => ListView.separated(
-          padding: const EdgeInsets.all(16),
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           itemCount: cashiers.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final cashier = cashiers[index];
             return Container(
               decoration: BoxDecoration(
-                color: AppColors.surfaceDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderDark),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFEDEEEF)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color.fromRGBO(0, 0, 0, 0.03),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 leading: CircleAvatar(
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-                  child: Text(cashier.name[0].toUpperCase(), 
-                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                  backgroundColor: const Color(0xFFE5F0EC),
+                  child: Text(
+                    cashier.name[0].toUpperCase(), 
+                    style: const TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      color: Color(0xFF006948), 
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                title: Text(cashier.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: Text(cashier.role.toUpperCase(), 
-                  style: const TextStyle(color: AppColors.textMutedDark, fontSize: 12)),
+                title: Text(
+                  cashier.name, 
+                  style: const TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    color: Color(0xFF191C1D), 
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                subtitle: Text(
+                  cashier.role.toUpperCase(), 
+                  style: const TextStyle(
+                    fontFamily: 'Space Mono',
+                    color: Color(0xFF6D7A72), 
+                    fontSize: 12,
+                  ),
+                ),
                 trailing: cashier.role == 'admin' 
-                  ? const Icon(Icons.security, color: AppColors.primary, size: 18)
+                  ? const Icon(Icons.security, color: Color(0xFF006948), size: 20)
                   : IconButton(
-                      icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                      icon: const Icon(Icons.delete_outline, color: Color(0xFFBA1A1A)),
                       onPressed: () => _confirmDelete(context, ref, cashier.id, cashier.name),
                     ),
               ),
             );
           },
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Gagal memuat: $e', style: const TextStyle(color: AppColors.error))),
+        loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF006948))),
+        error: (e, _) => Center(child: Text('Gagal memuat: $e', style: const TextStyle(color: Color(0xFFBA1A1A)))),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddCashier(context, ref),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.black),
+        backgroundColor: const Color(0xFF006948),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -64,16 +102,39 @@ class ManageCashiersScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Hapus Kasir?'),
-        content: Text('Apakah Anda yakin ingin menghapus akses untuk $name?'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Hapus Kasir?',
+          style: TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFBA1A1A),
+          ),
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin menghapus akses untuk $name?',
+          style: const TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
+            color: Color(0xFF3D4A42),
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
           TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: const Text('Batal', style: TextStyle(color: Color(0xFF6D7A72), fontWeight: FontWeight.bold)),
+          ),
+          FilledButton(
             onPressed: () {
               ref.read(cashierManagementProvider).removeCashier(id);
               Navigator.pop(context);
             }, 
-            child: const Text('Hapus', style: TextStyle(color: AppColors.error)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFBA1A1A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Hapus', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -89,36 +150,71 @@ class ManageCashiersScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Tambah Kasir'),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Tambah Kasir',
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF191C1D),
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Nama Lengkap'),
+                decoration: InputDecoration(
+                  labelText: 'Nama Lengkap',
+                  labelStyle: const TextStyle(color: Color(0xFF8A9A90)),
+                  filled: true,
+                  fillColor: const Color(0xFFF8F9FA),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
                 textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: pinController,
-                decoration: const InputDecoration(labelText: 'PIN (4 digit)', hintText: '1234'),
+                decoration: InputDecoration(
+                  labelText: 'PIN (4 digit)',
+                  labelStyle: const TextStyle(color: Color(0xFF8A9A90)),
+                  hintText: '1234',
+                  hintStyle: const TextStyle(color: Color(0xFFBCCAC0)),
+                  filled: true,
+                  fillColor: const Color(0xFFF8F9FA),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
                 keyboardType: TextInputType.number,
                 maxLength: 4,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: role,
-                decoration: const InputDecoration(labelText: 'Hak Akses'),
+                decoration: InputDecoration(
+                  labelText: 'Hak Akses',
+                  labelStyle: const TextStyle(color: Color(0xFF8A9A90)),
+                  filled: true,
+                  fillColor: const Color(0xFFF8F9FA),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
                 items: const [
-                  DropdownMenuItem(value: 'kasir', child: Text('Kasir')),
-                  DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                  DropdownMenuItem(value: 'kasir', child: Text('Kasir', style: TextStyle(fontFamily: 'Plus Jakarta Sans'))),
+                  DropdownMenuItem(value: 'admin', child: Text('Admin', style: TextStyle(fontFamily: 'Plus Jakarta Sans'))),
                 ],
                 onChanged: (val) => setState(() => role = val!),
+                dropdownColor: Colors.white,
+                borderRadius: BorderRadius.circular(12),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.pop(context), 
+              child: const Text('Batal', style: TextStyle(color: Color(0xFF6D7A72), fontWeight: FontWeight.bold)),
+            ),
             FilledButton(
               onPressed: () {
                 if (nameController.text.isNotEmpty && pinController.text.length == 4) {
@@ -130,7 +226,11 @@ class ManageCashiersScreen extends ConsumerWidget {
                   Navigator.pop(context);
                 }
               }, 
-              child: const Text('Simpan'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF006948),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),

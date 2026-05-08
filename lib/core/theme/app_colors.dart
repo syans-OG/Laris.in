@@ -9,20 +9,21 @@ class AppColors {
   static const textPrimaryDark = Color(0xFFE8EAF0);
   static const textMutedDark = Color(0xFF6B7280);
 
-  // Light Theme (Optional)
+  // Light Theme (V2 Luxury Minimal)
   static const backgroundLight = Color(0xFFF8F9FA);
   static const surfaceLight = Color(0xFFFFFFFF);
   static const surface2Light = Color(0xFFF1F3F4);
-  static const borderLight = Color(0xFFDEE2E6);
-  static const textPrimaryLight = Color(0xFF1A1A2E);
-  static const textMutedLight = Color(0xFF6C757D);
+  static const borderLight = Color(0xFFE2E8F0); // Softer border
+  static const textPrimaryLight = Color(0xFF1E1F26); // Neutral from Figma
+  static const textMutedLight = Color(0xFF64748B);
 
-  // Semantic Colors (Shared)
-  static const success = Color(0xFF00E5A0);
+  // Semantic Colors (V2)
+  static const primary = Color(0xFF059669); // Primary green
+  static const secondary = Color(0xFF56806B); // Secondary green
+  static const error = Color(0xFFCD645F); // Tertiary red
+  static const success = Color(0xFF059669);
   static const warning = Color(0xFFFFB347);
-  static const error = Color(0xFFFF5C6C);
   static const info = Color(0xFF4F8CFF);
-  static const primary = Color(0xFF00E5A0);
   static const qrisPurple = Color(0xFFA855F7);
   static const white = Color(0xFFFFFFFF);
   static const black = Color(0xFF000000);

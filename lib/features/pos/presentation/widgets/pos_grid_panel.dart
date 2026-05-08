@@ -18,6 +18,7 @@ class PosGridPanel extends ConsumerWidget {
     final categoriesState = ref.watch(categoriesProvider);
     final cartNotifier = ref.read(cartProvider.notifier);
     final searchQuery = ref.watch(productsQueryProvider);
+    final theme = Theme.of(context);
 
     Future<void> handleBarcodeScanned(String barcode) async {
       if (barcode.isEmpty) return;
@@ -27,11 +28,11 @@ class PosGridPanel extends ConsumerWidget {
         if (product.stock > 0) {
           cartNotifier.addProduct(product);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('\${product.name} otomatis ditambahkan ke keranjang')),
+            SnackBar(content: Text('${product.name} otomatis ditambahkan ke keranjang')),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Stok \${product.name} kosong!')),
+            SnackBar(content: Text('Stok ${product.name} kosong!')),
           );
         }
       } else {
@@ -51,30 +52,68 @@ class PosGridPanel extends ConsumerWidget {
 
     return Column(
       children: [
-        // Top Search Bar
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: AppTextInput(
-            label: 'Cari Produk',
-            hint: 'Ketik nama...',
-            prefixIcon: Icons.search,
-            suffixIcon: Icons.qr_code_scanner,
-            onSuffixTap: () {
-              // Open Camera Scanner
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CameraScannerScreen(
-                    onScan: (barcode) {
-                      handleBarcodeScanned(barcode);
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromRGBO(0, 0, 0, 0.03),
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.search, color: Color(0x996D7A72), size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    onChanged: (val) {
+                      ref.read(productsQueryProvider.notifier).state = val;
                     },
+                    style: const TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontSize: 16,
+                      color: Color(0xFF191C1D),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Cari produk...',
+                      hintStyle: const TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
+                        color: Color(0x996D7A72),
+                        fontSize: 16,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                      suffixIcon: IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF6D7A72), size: 20),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CameraScannerScreen(
+                                onScan: (barcode) {
+                                  handleBarcodeScanned(barcode);
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
-              );
-            },
-            onChanged: (val) {
-              ref.read(productsQueryProvider.notifier).state = val;
-            },
+              ],
+            ),
           ),
         ),
 
@@ -88,7 +127,7 @@ class PosGridPanel extends ConsumerWidget {
             final selectedId = ref.watch(productsCategoryFilterProvider);
 
             return SizedBox(
-              height: 48,
+              height: 40,
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
@@ -100,15 +139,29 @@ class PosGridPanel extends ConsumerWidget {
                   final categoryId = category?.id;
                   final isSelected = selectedId == categoryId;
 
-                  return ChoiceChip(
-                    label: Text(isAll ? 'Semua Kategori' : category!.name),
-                    selected: isSelected,
-                    onSelected: (selected) {
+                  return GestureDetector(
+                    onTap: () {
                       ref.read(productsCategoryFilterProvider.notifier).state =
-                          selected ? categoryId : null;
+                          isSelected ? null : categoryId;
                     },
-                    selectedColor: AppColors.primary,
-                    backgroundColor: AppColors.surface2Dark,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF006948) : const Color(0xFFF3F4F5),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Center(
+                        child: Text(
+                          isAll ? 'Semua' : category!.name,
+                          style: TextStyle(
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            fontSize: 13,
+                            color: isSelected ? Colors.white : const Color(0xFF6D7A72),
+                          ),
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),
@@ -120,8 +173,8 @@ class PosGridPanel extends ConsumerWidget {
         // Main Product Grid
         Expanded(
           child: productsState.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(child: Text('Error: $err')),
+            loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            error: (err, _) => Center(child: Text('Error: $err', style: TextStyle(color: AppColors.error))),
             data: (products) {
               final filteredProducts = searchQuery.trim().isEmpty
                   ? products
@@ -132,14 +185,18 @@ class PosGridPanel extends ConsumerWidget {
                     }).toList();
 
               if (filteredProducts.isEmpty) {
-                return const Center(child: Text('Tidak ada produk tersedia.'));
+                return Center(
+                  child: Text(
+                    'Tidak ada produk tersedia.',
+                    style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textMutedLight),
+                  ),
+                );
               }
 
               // Responsive Cross Axis Count
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  // Determine columns dynamically on the allocated panel width
-                  int crossAxisCount = 2; // Mobile small
+                  int crossAxisCount = 2;
                   if (constraints.maxWidth > 800) {
                     crossAxisCount = 4;
                   } else if (constraints.maxWidth > 500) {
@@ -159,12 +216,9 @@ class PosGridPanel extends ConsumerWidget {
                       final product = filteredProducts[index];
                       return ProductCard(
                         product: product,
-                        // Override default edit onTap context
                         onTap: () {
                           if (product.stock > 0) {
                             cartNotifier.addProduct(product);
-                            // Optional: SnackBar feedback for adding to cart disabled 
-                            // as it triggers too often on fast taps.
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Stok habis!')),

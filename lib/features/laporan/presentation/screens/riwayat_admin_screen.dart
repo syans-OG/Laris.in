@@ -4,109 +4,110 @@ import '../../../auth/domain/entities/cashier_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../history/presentation/screens/history_screen.dart';
 
-const _background = Color(0xFF0E1015);
-const _accent = Color(0xFF00E5A0);
-const _textMuted = Color(0xFF84958A);
-const _surface = Color(0xFF1C1E26);
-const _textPrimary = Color(0xFFFFFFFF);
+const _background = Color(0xFFF8F9FA);
+const _accent = Color(0xFF006948);
+const _textMuted = Color(0xFF6D7A72);
+const _textPrimary = Color(0xFF191C1D);
 
-class RiwayatAdminScreen extends ConsumerWidget {
+class RiwayatAdminScreen extends ConsumerStatefulWidget {
   const RiwayatAdminScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RiwayatAdminScreen> createState() => _RiwayatAdminScreenState();
+}
+
+class _RiwayatAdminScreenState extends ConsumerState<RiwayatAdminScreen> {
+  int _selectedIndex = 0;
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onTabTapped(int index) {
+    setState(() => _selectedIndex = index);
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Ambil semua kasir aktif dari authRepositoryProvider
     final cashiersFuture = ref.watch(_allCashiersProvider);
 
     return cashiersFuture.when(
-      loading: () =>
-          const Center(child: CircularProgressIndicator(color: _accent)),
+      loading: () => const Center(child: CircularProgressIndicator(color: _accent)),
       error: (e, _) => Center(child: Text('Error: $e')),
       data: (cashiers) {
         if (cashiers.isEmpty) {
           return const Center(
-            child: Text('Tidak ada kasir terdaftar',
-                style: TextStyle(color: _textMuted)),
+            child: Text('Tidak ada kasir terdaftar', style: TextStyle(color: _textMuted)),
           );
         }
 
-        // Tab: Semua + satu tab per kasir
-        final tabs = <Tab>[
-          const Tab(text: 'Semua'),
-          ...cashiers.map((c) => Tab(
-                child: _CashierTab(cashier: c),
-              )),
-        ];
-
+        final List<String> tabLabels = ['Semua', ...cashiers.map((c) => c.name)];
         final views = <Widget>[
-          // Tab "Semua" — semua transaksi tanpa filter
           const HistoryScreen(hideAppBar: true, cashierId: null),
-          // Tab per kasir
-          ...cashiers.map((c) =>
-              HistoryScreen(hideAppBar: true, cashierId: c.id)),
+          ...cashiers.map((c) => HistoryScreen(hideAppBar: true, cashierId: c.id)),
         ];
 
-        return DefaultTabController(
-          length: tabs.length,
-          child: Column(
-            children: [
-              Container(
-                color: _background,
-                child: TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  labelColor: _accent,
-                  unselectedLabelColor: _textMuted,
-                  indicatorColor: _accent,
-                  indicatorSize: TabBarIndicatorSize.label,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-                  tabs: tabs,
+        return Column(
+          children: [
+            // Custom Chip Tabs (Matching SalesReportScreen style)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+              color: _background,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                child: Row(
+                  children: List.generate(tabLabels.length, (index) {
+                    final isActive = _selectedIndex == index;
+                    return GestureDetector(
+                      onTap: () => _onTabTapped(index),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isActive ? _accent.withOpacity(0.1) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isActive ? _accent.withOpacity(0.3) : const Color(0xFFD3D5D4),
+                          ),
+                        ),
+                        child: Text(
+                          tabLabels[index],
+                          style: TextStyle(
+                            fontFamily: 'Plus Jakarta Sans',
+                            color: isActive ? _accent : _textMuted,
+                            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               ),
-              Expanded(
-                child: TabBarView(children: views),
+            ),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() => _selectedIndex = index);
+                },
+                children: views,
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
-    );
-  }
-}
-
-// Widget tab kasir — tampilkan nama + role badge
-class _CashierTab extends StatelessWidget {
-  final CashierEntity cashier;
-  const _CashierTab({required this.cashier});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(cashier.name),
-          const SizedBox(height: 2),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-            decoration: BoxDecoration(
-              color: cashier.role == 'admin'
-                  ? _accent.withValues(alpha: 0.2)
-                  : _surface,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              cashier.role.toUpperCase(),
-              style: TextStyle(
-                fontSize: 9,
-                color: cashier.role == 'admin' ? _accent : _textPrimary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

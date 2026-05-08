@@ -16,3 +16,10 @@ final historyByCashierProvider =
   if (cashierId == null) return all;
   return all.where((t) => t.cashierId == cashierId).toList();
 });
+
+// Fetch full transaction details (including items) by ID
+final transactionDetailsProvider =
+    FutureProvider.family<TransactionEntity?, int>((ref, transactionId) async {
+  final repo = ref.watch(transactionRepositoryProvider);
+  return repo.getTransactionById(transactionId);
+});

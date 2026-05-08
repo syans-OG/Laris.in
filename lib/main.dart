@@ -38,7 +38,7 @@ class LarisInApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Laris.in',
-      theme: AppTheme.darkTheme, // Using MVP Design Tokens
+      theme: AppTheme.lightTheme, // V2 Luxury Minimal default
       home: const AuthGate(),
     );
   }

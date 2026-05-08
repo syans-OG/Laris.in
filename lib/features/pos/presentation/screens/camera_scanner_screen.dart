@@ -39,25 +39,47 @@ class _CameraScannerScreenState extends State<CameraScannerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Scan Barcode Kamera'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        title: const Text(
+          'Scan Barcode',
+          style: TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF191C1D),
+          ),
+        ),
+        backgroundColor: const Color(0xFFF8F9FA),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF191C1D)),
         actions: [
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Batch Scan', style: TextStyle(fontSize: 12, color: Colors.white)),
+              const Text(
+                'Batch Scan', 
+                style: TextStyle(
+                  fontFamily: 'Plus Jakarta Sans', 
+                  fontSize: 14, 
+                  fontWeight: FontWeight.w600, 
+                  color: Color(0xFF191C1D)
+                )
+              ),
+              const SizedBox(width: 8),
               Switch(
                 value: _isBatchMode,
-                activeThumbColor: const Color(0xFF00E5A0),
+                activeColor: Colors.white,
+                activeTrackColor: const Color(0xFF006948),
+                inactiveThumbColor: const Color(0xFF6D7A72),
+                inactiveTrackColor: const Color(0xFFEDEEEF),
+                trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
                 onChanged: (val) => setState(() => _isBatchMode = val),
               ),
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.cameraswitch),
+            icon: const Icon(Icons.cameraswitch_outlined, color: Color(0xFF191C1D)),
             onPressed: () => controller.switchCamera(),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Stack(
@@ -96,28 +118,47 @@ class _CameraScannerScreenState extends State<CameraScannerScreen> {
           
           // Overlay Target Box
           Container(
-            decoration: ShapeDecoration(
+            decoration: const ShapeDecoration(
               shape: QrScannerOverlayShape(
-                borderColor: Theme.of(context).primaryColor,
-                borderRadius: 10,
-                borderLength: 30,
-                borderWidth: 10,
+                borderColor: Color(0xFF006948),
+                borderRadius: 16,
+                borderLength: 40,
+                borderWidth: 8,
                 cutOutSize: 300,
               ),
             ),
           ),
           
           Positioned(
-            bottom: 40,
+            bottom: 48,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color.fromRGBO(0, 0, 0, 0.1),
+                    blurRadius: 16,
+                    offset: Offset(0, 8),
+                  ),
+                ],
               ),
-              child: const Text(
-                'Arahkan barcode ke dalam kotak',
-                style: TextStyle(color: Colors.white),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.qr_code_scanner, color: Color(0xFF006948), size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Arahkan barcode ke dalam kotak',
+                    style: TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      color: Color(0xFF191C1D),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ),
           )
@@ -157,14 +198,14 @@ class QrScannerOverlayShape extends ShapeBorder {
 
   @override
   Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
-    Path _getLeftTopPath(Rect rect) {
+    Path getLeftTopPath(Rect rect) {
       return Path()
         ..moveTo(rect.left, rect.bottom)
         ..lineTo(rect.left, rect.top)
         ..lineTo(rect.right, rect.top);
     }
 
-    return _getLeftTopPath(rect)
+    return getLeftTopPath(rect)
       ..lineTo(
         rect.right,
         rect.bottom,
@@ -184,7 +225,7 @@ class QrScannerOverlayShape extends ShapeBorder {
     final width = rect.width;
     final height = rect.height;
     final borderOffset = borderWidth / 2;
-    final _cutOutSize = cutOutSize < width ? cutOutSize : width - borderOffset;
+    final finalCutOutSize = cutOutSize < width ? cutOutSize : width - borderOffset;
 
     final backgroundPaint = Paint()
       ..color = overlayColor
@@ -201,10 +242,10 @@ class QrScannerOverlayShape extends ShapeBorder {
       ..blendMode = BlendMode.dstOut;
 
     final cutOutRect = Rect.fromLTWH(
-      rect.left + width / 2 - _cutOutSize / 2 + borderOffset,
-      rect.top + height / 2 - _cutOutSize / 2 + borderOffset,
-      _cutOutSize - borderOffset * 2,
-      _cutOutSize - borderOffset * 2,
+      rect.left + width / 2 - finalCutOutSize / 2 + borderOffset,
+      rect.top + height / 2 - finalCutOutSize / 2 + borderOffset,
+      finalCutOutSize - borderOffset * 2,
+      finalCutOutSize - borderOffset * 2,
     );
 
     canvas

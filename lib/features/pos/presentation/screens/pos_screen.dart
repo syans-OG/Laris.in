@@ -5,80 +5,97 @@ import '../widgets/pos_grid_panel.dart';
 import '../widgets/pos_cart_panel.dart';
 import '../providers/cart_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
-
+import '../../../../shared/presentation/widgets/live_clock.dart';
+import 'dart:ui';
 class PosScreen extends StatelessWidget {
   const PosScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Laris.in'),
-        centerTitle: false,
-        actions: [
-          // Top bar placeholder based on User Decision 01 "Default Admin"
-          Center(
+      backgroundColor: AppColors.backgroundLight,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8F9FA),
+            boxShadow: [
+              BoxShadow(
+                color: Color.fromRGBO(0, 33, 20, 0.04),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              )
+            ]
+          ),
+          child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.only(right: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 14,
-                    backgroundColor: AppColors.primary,
-                    child: Icon(Icons.person, size: 18, color: AppColors.black),
-                  ),
-                  const SizedBox(width: 8),
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
                   Text(
-                    'Admin',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    'Laris.in',
+                    style: TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                      color: Color(0xFF059669),
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  LiveClock(),
+                  CircleAvatar(
+                    radius: 16.5,
+                    backgroundColor: Color(0xFFEDEEEF),
+                    child: Icon(Icons.person, size: 20, color: AppColors.textMutedLight),
                   ),
                 ],
               ),
             ),
           ),
-        ],
+        ),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // If screen width >= 600px, show horizontal split pane (Tablet/Desktop)
           if (constraints.maxWidth >= 600) {
             return Row(
               children: [
                 const Expanded(
                   flex: 3,
-                  child: PosGridPanel(), // 60% left space
+                  child: PosGridPanel(),
                 ),
-                const VerticalDivider(width: 1, thickness: 1, color: AppColors.borderDark),
+                const VerticalDivider(width: 1, thickness: 1, color: AppColors.borderLight),
                 Expanded(
                   flex: 2,
-                  child: const PosCartPanel(), // 40% right space
+                  child: const PosCartPanel(),
                 ),
               ],
             );
           }
 
-          return Stack(
-            children: [
-              // Produk grid dengan padding bottom agar tidak tertutup bottom bar
-              const Padding(
-                padding: EdgeInsets.only(bottom: 72),
-                child: PosGridPanel(),
-              ),
+          return Consumer(
+            builder: (context, ref, _) {
+              final cartState = ref.watch(cartProvider);
+              final isCartEmpty = cartState.items.isEmpty;
 
-              // Persistent bottom bar selalu di bawah
-              Positioned(
-                bottom: 0, left: 0, right: 0,
-                child: Consumer(
-                  builder: (context, ref, _) {
-                    final cartState = ref.watch(cartProvider);
-                    if (cartState.items.isEmpty) {
-                      return _buildEmptyCartBar();
-                    }
-                    return _buildCartBar(context, cartState);
-                  },
-                ),
-              ),
-            ],
+              return Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(bottom: isCartEmpty ? 0 : 72),
+                    child: const PosGridPanel(),
+                  ),
+                  if (!isCartEmpty)
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: _buildCartBar(context, cartState, theme),
+                    ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -86,27 +103,10 @@ class PosScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyCartBar() {
-    return Container(
-      height: 64,
-      decoration: const BoxDecoration(
-        color: Color(0xFF181C27),
-        border: Border(top: BorderSide(color: Color(0xFF2A2F45))),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.shopping_cart_outlined, color: Color(0xFF6B7280), size: 20),
-          SizedBox(width: 8),
-          Text(
-            'Keranjang kosong',
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink(); // Hide the bar completely when empty, per modern minimal design
   }
 
-  Widget _buildCartBar(BuildContext context, dynamic cartState) {
+  Widget _buildCartBar(BuildContext context, dynamic cartState, ThemeData theme) {
     return GestureDetector(
       onTap: () {
         showModalBottomSheet(
@@ -119,18 +119,13 @@ class PosScreen extends StatelessWidget {
           builder: (sheetContext) {
             return Stack(
               children: [
-                // ── Area luar sheet: tap untuk dismiss ──
                 Positioned.fill(
                   child: GestureDetector(
                     onTap: () => Navigator.of(sheetContext).pop(),
                     behavior: HitTestBehavior.opaque,
-                    child: const ColoredBox(
-                      color: Colors.transparent,
-                    ),
+                    child: const ColoredBox(color: Colors.transparent),
                   ),
                 ),
-
-                // ── Sheet content ──
                 DraggableScrollableSheet(
                   initialChildSize: 0.6,
                   minChildSize: 0.4,
@@ -138,30 +133,27 @@ class PosScreen extends StatelessWidget {
                   snap: true,
                   snapSizes: const [0.6, 0.92],
                   builder: (_, scrollController) => GestureDetector(
-                    // Cegah tap di dalam sheet ter-forward ke barrier di atas
                     onTap: () {},
                     child: Container(
                       decoration: const BoxDecoration(
-                        color: Color(0xFF181C27),
+                        color: AppColors.surfaceLight,
                         borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
                         ),
                       ),
                       child: Column(
                         children: [
-                          // Drag handle
                           Center(
                             child: Container(
                               margin: const EdgeInsets.only(top: 12, bottom: 8),
-                              width: 40, height: 4,
+                              width: 48, height: 4,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2A2F45),
+                                color: AppColors.borderLight,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
                           ),
-                          // Cart content
                           Expanded(
                             child: PosCartPanel(scrollController: scrollController),
                           ),
@@ -176,49 +168,134 @@ class PosScreen extends StatelessWidget {
         );
       },
       child: Container(
-        height: 72,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: const BoxDecoration(
-          color: Color(0xFF181C27),
-          border: Border(top: BorderSide(color: Color(0xFF2A2F45))),
-        ),
-        child: Row(
-          children: [
-            // Badge jumlah item
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF00E5A0),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${cartState.totalQty} item', // cartState.totalQty digunakan agar konsisten
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Label
-            const Text('Lihat keranjang', style: TextStyle(color: Colors.white, fontSize: 14)),
-            const Spacer(),
-            // Total
-            Text(
-              CurrencyFormatter.format(cartState.grandTotal),
-              style: const TextStyle(
-                color: Color(0xFF00E5A0),
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'SpaceMono',
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.keyboard_arrow_up, color: Color(0xFF00E5A0)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color.fromRGBO(188, 202, 192, 0.05)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromRGBO(0, 33, 20, 0.08),
+              blurRadius: 16,
+              offset: Offset(0, -8),
+            )
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: Padding(
+              padding: const EdgeInsets.all(17),
+              child: Row(
+                children: [
+                  // Icon Cart with Badge
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.shopping_basket_outlined, color: Color(0xFF006948)),
+                      ),
+                      Positioned(
+                        top: -8,
+                        right: -8,
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFBA1A1A),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color.fromRGBO(0, 0, 0, 0.05),
+                                blurRadius: 1,
+                                offset: Offset(0, 1),
+                              )
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${cartState.totalQty}',
+                              style: AppTypography.displaySmall.copyWith(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 16),
+                  // Total Texts
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Total (${cartState.totalQty} items)',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                            color: Color(0xFF3D4A42),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          CurrencyFormatter.format(cartState.grandTotal),
+                          style: AppTypography.displaySmall.copyWith(
+                            color: const Color(0xFF191C1D),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Button
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF006948), Color(0xFF00855D)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color.fromRGBO(0, 105, 72, 0.2),
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        )
+                      ],
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    child: const Text(
+                      'BAYAR',
+                      style: TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
+

@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-
-const _accent = Color(0xFF00E5A0);
-const _textMuted = Color(0xFF84958A);
+import '../../../../core/theme/app_theme.dart';
 
 class PinIndicator extends StatelessWidget {
   final int pinLength;
   final bool isError;
+  final int maxLen; // Make it configurable, default to 4
 
   const PinIndicator({
     super.key,
     required this.pinLength,
     this.isError = false,
+    this.maxLen = 4,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) {
+      children: List.generate(maxLen, (index) {
         final isFilled = index < pinLength;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
@@ -27,23 +27,8 @@ class PinIndicator extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isFilled 
-                ? (isError ? const Color(0xFFFFB4AB) : _accent) 
-                : Colors.transparent,
-            border: Border.all(
-              color: isFilled 
-                  ? (isError ? const Color(0xFFFFB4AB) : _accent) 
-                  : _textMuted.withValues(alpha: 0.5),
-              width: 1.5,
-            ),
-            boxShadow: isFilled && !isError
-                ? [
-                    BoxShadow(
-                      color: _accent.withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    )
-                  ]
-                : null,
+                ? (isError ? AppColors.error : AppColors.primary) 
+                : AppColors.surface2Light,
           ),
         );
       }),

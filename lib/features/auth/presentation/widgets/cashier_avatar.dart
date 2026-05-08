@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/cashier_entity.dart';
 
-const _accent = Color(0xFF00E5A0);
-const _textPrimary = Color(0xFFFFFFFF);
-const _textSecondary = Color(0xFFBACBBF);
-
 class CashierAvatar extends StatelessWidget {
   final CashierEntity cashier;
   final bool isSelected;
@@ -17,70 +13,103 @@ class CashierAvatar extends StatelessWidget {
     required this.onTap,
   });
 
+  String _getInitials(String name) {
+    if (name.isEmpty) return '?';
+    final parts = name.split(' ');
+    if (parts.length > 1) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isKasir = cashier.role.toLowerCase() != 'admin';
+
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(right: 16),
-        child: Column(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF006948) : const Color(0xFFEDEEEF),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, 0.03),
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Stack(
           children: [
-            Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
+            if (isSelected)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF006948),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? _accent : Colors.transparent,
-                      width: isSelected ? 3 : 0,
-                    ),
-                    image: DecorationImage(
-                      image: const AssetImage('assets/images/avatar_placeholder.png'), // Need fallback if no asset
-                      fit: BoxFit.cover,
-                      colorFilter: isSelected 
-                        ? null 
-                        : ColorFilter.mode(Colors.black.withValues(alpha: 0.4), BlendMode.darken),
-                    ),
                   ),
-                  child: cashier.avatarUrl == null 
-                      ? Center(
-                          child: Icon(
-                            Icons.person,
-                            size: 36,
-                            color: isSelected ? _textPrimary : _textSecondary,
-                          ),
-                        )
-                      : null,
+                  padding: const EdgeInsets.all(4),
+                  child: const Icon(
+                    Icons.check,
+                    color: Colors.white,
+                    size: 12,
+                  ),
                 ),
-                if (isSelected)
+              ),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   Container(
-                    decoration: const BoxDecoration(
-                      color: _accent,
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: isKasir ? const Color(0xFFE5F0EC) : const Color(0xFF006948),
                       shape: BoxShape.circle,
                     ),
-                    padding: const EdgeInsets.all(4),
-                    child: const Icon(
-                      Icons.check,
-                      color: Color(0xFF0E1015),
-                      size: 14,
+                    alignment: Alignment.center,
+                    child: Text(
+                      _getInitials(cashier.name),
+                      style: TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 20,
+                        color: isKasir ? const Color(0xFF006948) : Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              cashier.name.split(' ').first, // Limit name length
-              style: TextStyle(
-                color: isSelected ? _textPrimary : _textSecondary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                fontSize: 12,
+                  const SizedBox(height: 12),
+                  Text(
+                    cashier.name,
+                    style: const TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontSize: 14,
+                      color: Color(0xFF191C1D),
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    cashier.role.toUpperCase() == 'ADMIN' ? 'Administrator' : 'Staff',
+                    style: const TextStyle(
+                      fontFamily: 'Space Mono',
+                      color: Color(0xFF6D7A72),
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

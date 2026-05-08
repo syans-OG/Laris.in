@@ -1,202 +1,343 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/widgets/app_text_input.dart';
 import '../providers/product_provider.dart';
 import '../providers/category_provider.dart';
-import '../widgets/product_card.dart';
+import '../widgets/inventory_product_card.dart';
 import '../widgets/import_csv_bottom_sheet.dart';
 import '../widgets/category_management_dialog.dart';
 import '../widgets/stock_adjustment_dialog.dart';
 import 'product_form_screen.dart';
 
-class ProductManagementScreen extends ConsumerWidget {
+class ProductManagementScreen extends ConsumerStatefulWidget {
   const ProductManagementScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Manajemen Produk & Stok'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.category_outlined),
-              onPressed: () => _showCategoryManagement(context),
-              tooltip: 'Kelola Kategori',
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.add_circle_outline_rounded),
-              position: PopupMenuPosition.under,
-              tooltip: 'Tambah Produk',
-              onSelected: (value) {
-                if (value == 'manual') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProductFormScreen()),
-                  );
-                } else if (value == 'import') {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => const ImportCsvBottomSheet(),
-                  );
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'manual',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit_note_rounded, size: 20),
-                      SizedBox(width: 12),
-                      Text('Tambah Manual'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'import',
-                  child: Row(
-                    children: [
-                      Icon(Icons.file_download_outlined, size: 20),
-                      SizedBox(width: 12),
-                      Text('Import dari CSV'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Semua Produk'),
-              Tab(text: 'Stok Menipis'),
-              Tab(text: 'Riwayat Stok'),
-            ],
-            indicatorColor: AppColors.primary,
-            labelColor: AppColors.primary,
+  ConsumerState<ProductManagementScreen> createState() => _ProductManagementScreenState();
+}
+
+class _ProductManagementScreenState extends ConsumerState<ProductManagementScreen> {
+  int _activeTab = 0; // 0: Semua Stok, 1: Stok Menipis, 2: Riwayat Masuk
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: const Text(
+          'Produk',
+          style: TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF191C1D),
           ),
         ),
-        body: TabBarView(
+        backgroundColor: const Color(0xFFF8F9FA),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF191C1D)),
+      ),
+      body: SafeArea(
+        child: Stack(
           children: [
-            _buildAllProductsTab(context, ref),
-            _buildLowStockTab(context, ref),
-            _buildStockHistoryTab(context, ref),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 16),
+                _buildTabs(),
+                if (_activeTab != 2) ...[
+                  _buildSearchAndFilter(),
+                  _buildCategoryChips(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      padding: const EdgeInsets.only(bottom: 100),
+                      child: _activeTab == 0 ? _buildAllProducts() : _buildLowStockProducts(),
+                    ),
+                  ),
+                ] else ...[
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      padding: const EdgeInsets.only(bottom: 100),
+                      child: _buildStockHistory(),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            _buildFAB(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAllProductsTab(BuildContext context, WidgetRef ref) {
-    final productsState = ref.watch(productsProvider);
-    final categoriesState = ref.watch(categoriesProvider);
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: AppTextInput(
-            label: 'Cari Produk',
-            hint: 'Nama atau Barcode',
-            prefixIcon: Icons.search,
-            onChanged: (val) {
-              ref.read(productsQueryProvider.notifier).state = val;
-            },
-          ),
+  Widget _buildTabs() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE9EBEA),
+          borderRadius: BorderRadius.circular(12),
         ),
-        _buildCategoryFilter(ref, categoriesState, context),
-        const SizedBox(height: 8),
-        Expanded(
-          child: productsState.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(child: Text('Error: $err')),
-            data: (products) => _buildProductGrid(context, ref, products),
-          ),
+        child: Row(
+          children: [
+            Expanded(child: _buildTabItem(0, 'Semua Stok')),
+            Expanded(child: _buildTabItem(1, 'Menipis')),
+            Expanded(child: _buildTabItem(2, 'Riwayat')),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildLowStockTab(BuildContext context, WidgetRef ref) {
-    final lowStockState = ref.watch(lowStockProductsProvider);
+  Widget _buildTabItem(int index, String label) {
+    final isActive = _activeTab == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _activeTab = index;
+        });
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: isActive
+              ? const [
+                  BoxShadow(
+                    color: Color(0x0D000000),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+              fontSize: 13,
+              color: isActive ? const Color(0xFF006948) : const Color(0xFF6D7A72),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-    return lowStockState.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('Error: $err')),
-      data: (products) {
-        if (products.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.check_circle_outline, size: 64, color: AppColors.primary),
-                SizedBox(height: 16),
-                Text('Stok aman! Tidak ada yang menipis.'),
+  Widget _buildSearchAndFilter() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color.fromRGBO(0, 0, 0, 0.03),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, color: Color(0x996D7A72), size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      onChanged: (val) {
+                        ref.read(productsQueryProvider.notifier).state = val;
+                      },
+                      style: const TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 16,
+                        color: Color(0xFF191C1D),
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: 'Cari nama barang atau SKU...',
+                        hintStyle: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 16,
+                          color: Color(0x996D7A72),
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromRGBO(0, 0, 0, 0.03),
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
               ],
             ),
-          );
-        }
-        return _buildProductGrid(context, ref, products);
+            child: const Center(
+              child: Icon(Icons.tune, color: Color(0xFF3D4A42), size: 20),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryChips() {
+    final categoriesState = ref.watch(categoriesProvider);
+
+    return categoriesState.when(
+      loading: () => const SizedBox(height: 60),
+      error: (_, __) => const SizedBox(height: 60),
+      data: (categories) {
+        final selectedId = ref.watch(productsCategoryFilterProvider);
+
+        return Container(
+          height: 56,
+          padding: const EdgeInsets.only(top: 16),
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            children: [
+              _buildFilterChip(
+                label: 'Semua',
+                isSelected: selectedId == null,
+                onTap: () {
+                  ref.read(productsCategoryFilterProvider.notifier).state = null;
+                },
+              ),
+              const SizedBox(width: 8),
+              ...categories.map((category) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _buildFilterChip(
+                    label: category.name,
+                    isSelected: selectedId == category.id,
+                    onTap: () {
+                      ref.read(productsCategoryFilterProvider.notifier).state = category.id;
+                    },
+                  ),
+                );
+              }),
+              _buildCustomFilterChip(),
+            ],
+          ),
+        );
       },
     );
   }
 
-  Widget _buildStockHistoryTab(BuildContext context, WidgetRef ref) {
-    final logsState = ref.watch(stockLogsProvider);
+  Widget _buildFilterChip({required String label, required bool isSelected, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF006948) : const Color(0xFFF3F4F5),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              fontSize: 13,
+              color: isSelected ? Colors.white : const Color(0xFF6D7A72),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-    return logsState.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('Error: $err')),
-      data: (logs) {
-        if (logs.isEmpty) {
-          return const Center(child: Text('Belum ada riwayat stok.'));
+  Widget _buildCustomFilterChip() {
+    return GestureDetector(
+      onTap: () => _showCategoryManagement(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3F4F5),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.edit_outlined, size: 14, color: Color(0xFF6D7A72)),
+            SizedBox(width: 6),
+            Text(
+              'Custom',
+              style: TextStyle(
+                fontFamily: 'Plus Jakarta Sans',
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                color: Color(0xFF6D7A72),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAllProducts() {
+    final productsState = ref.watch(productsProvider);
+    return productsState.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, _) => Padding(
+        padding: const EdgeInsets.all(32),
+        child: Center(child: Text('Error: $err', style: const TextStyle(color: AppColors.error))),
+      ),
+      data: (products) {
+        if (products.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(
+              child: Text('Tidak ada produk.', style: TextStyle(color: AppColors.textMutedLight)),
+            ),
+          );
         }
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: logs.length,
-          separatorBuilder: (_, __) => const Divider(color: AppColors.borderDark),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(24),
+          itemCount: products.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
-            final log = logs[index];
-            final isPositive = log.qtyChange > 0;
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(
-                  color: isPositive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isPositive ? Icons.add : Icons.remove,
-                  color: isPositive ? Colors.green : Colors.red,
-                ),
-              ),
-              title: Text(log.productName, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${log.type.toUpperCase()} • ${log.createdAt.toString().split('.')[0]}'),
-                  if (log.note != null) Text(log.note!, style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
-                ],
-              ),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${isPositive ? '+' : ''}${log.qtyChange}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isPositive ? Colors.green : Colors.red,
-                      fontSize: 16,
-                    ),
-                  ),
-                  Text('Total: ${log.totalAfter}', style: const TextStyle(fontSize: 11)),
-                ],
-              ),
+            final product = products[index];
+            return InventoryProductCard(
+              product: product,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ProductFormScreen(product: product)),
+                );
+              },
+              onMoreOptionsTap: () => _showStockAdjustment(context, product),
             );
           },
         );
@@ -204,104 +345,257 @@ class ProductManagementScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProductGrid(BuildContext context, WidgetRef ref, List<dynamic> products) {
-    if (products.isEmpty) {
-      return const Center(child: Text('Tidak ada produk.'));
-    }
-    final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = screenWidth > 600 ? 4 : 2;
-
-    return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        childAspectRatio: 0.75,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+  Widget _buildLowStockProducts() {
+    final lowStockState = ref.watch(lowStockProductsProvider);
+    return lowStockState.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator()),
       ),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final product = products[index];
-        return Stack(
-          children: [
-            ProductCard(
+      error: (err, _) => Padding(
+        padding: const EdgeInsets.all(32),
+        child: Center(child: Text('Error: $err', style: const TextStyle(color: AppColors.error))),
+      ),
+      data: (products) {
+        if (products.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_outline, size: 64, color: AppColors.primary),
+                  SizedBox(height: 16),
+                  Text('Stok aman! Tidak ada yang menipis.', style: TextStyle(color: AppColors.textMutedLight)),
+                ],
+              ),
+            ),
+          );
+        }
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(24),
+          itemCount: products.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 16),
+          itemBuilder: (context, index) {
+            final product = products[index];
+            return InventoryProductCard(
               product: product,
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => ProductFormScreen(product: product),
-                  ),
+                  MaterialPageRoute(builder: (_) => ProductFormScreen(product: product)),
                 );
               },
-            ),
-            Positioned(
-              top: 4, right: 4,
-              child: IconButton.filledTonal(
-                icon: const Icon(Icons.add_business, size: 18),
-                onPressed: () => _showStockAdjustment(context, product),
-                tooltip: 'Update Stok',
-              ),
-            ),
-          ],
+              onMoreOptionsTap: () => _showStockAdjustment(context, product),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildCategoryFilter(WidgetRef ref, AsyncValue categoriesState, BuildContext context) {
-    return categoriesState.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (categories) {
-        final selectedId = ref.watch(productsCategoryFilterProvider);
-        
-        return SizedBox(
-          height: 40,
+  Widget _buildStockHistory() {
+    final logsState = ref.watch(stockLogsProvider);
+
+    return logsState.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, _) => Padding(
+        padding: const EdgeInsets.all(32),
+        child: Center(child: Text('Error: $err', style: const TextStyle(color: AppColors.error))),
+      ),
+      data: (logs) {
+        if (logs.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(
+              child: Text('Belum ada riwayat stok.', style: TextStyle(color: AppColors.textMutedLight)),
+            ),
+          );
+        }
+        return Container(
+          margin: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D000000),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
           child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            scrollDirection: Axis.horizontal,
-            itemCount: categories.length + 2, // +1 for "Semua", +1 for "+"
-            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            itemCount: logs.length,
+            separatorBuilder: (_, __) => const Divider(color: Color(0xFFEDEEEF), height: 1),
             itemBuilder: (context, index) {
-              if (index == 0) {
-                final isSelected = selectedId == null;
-                return ChoiceChip(
-                  label: const Text('Semua'),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    ref.read(productsCategoryFilterProvider.notifier).state = null;
-                  },
-                  selectedColor: AppColors.primary,
-                  backgroundColor: AppColors.surface2Dark,
-                );
-              }
-              
-              if (index == categories.length + 1) {
-                return ActionChip(
-                  avatar: const Icon(Icons.add, size: 16),
-                  label: const Text('Kategori'),
-                  onPressed: () => _showCategoryManagement(context),
-                  backgroundColor: AppColors.surface2Dark,
-                );
-              }
-
-              final category = categories[index - 1];
-              final isSelected = selectedId == category.id;
-
-              return ChoiceChip(
-                label: Text(category.name),
-                selected: isSelected,
-                onSelected: (selected) {
-                  ref.read(productsCategoryFilterProvider.notifier).state = selected ? category.id : null;
-                },
-                selectedColor: AppColors.primary,
-                backgroundColor: AppColors.surface2Dark,
+              final log = logs[index];
+              final isPositive = log.qtyChange > 0;
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isPositive ? const Color(0x1A059669) : const Color(0x1ABA1A1A),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isPositive ? Icons.add : Icons.remove,
+                        color: isPositive ? const Color(0xFF059669) : const Color(0xFFBA1A1A),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            log.productName,
+                            style: const TextStyle(
+                              fontFamily: 'Plus Jakarta Sans',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Color(0xFF191C1D),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${log.type.toUpperCase()} • ${log.createdAt.toString().split('.')[0]}',
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              color: Color(0xFF6D7A72),
+                            ),
+                          ),
+                          if (log.note != null && log.note!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              log.note!,
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                                color: Color(0xFF6D7A72),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${isPositive ? '+' : ''}${log.qtyChange}',
+                          style: TextStyle(
+                            fontFamily: 'Space Mono',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isPositive ? const Color(0xFF059669) : const Color(0xFFBA1A1A),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Total: ${log.totalAfter}',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            color: Color(0xFF6D7A72),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               );
             },
           ),
         );
       },
+    );
+  }
+
+  Widget _buildFAB(BuildContext context) {
+    return Positioned(
+      bottom: 24, // adjust to stay above BottomNavBar handled by MasterLayout
+      right: 24,
+      child: PopupMenuButton<String>(
+        position: PopupMenuPosition.over,
+        offset: const Offset(0, -120),
+        onSelected: (value) {
+          if (value == 'manual') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProductFormScreen()),
+            );
+          } else if (value == 'import') {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => const ImportCsvBottomSheet(),
+            );
+          }
+        },
+        itemBuilder: (context) => [
+          const PopupMenuItem(
+            value: 'manual',
+            child: Row(
+              children: [
+                Icon(Icons.edit_note_rounded, size: 20, color: Color(0xFF3D4A42)),
+                SizedBox(width: 12),
+                Text('Tambah Manual', style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 14)),
+              ],
+            ),
+          ),
+          const PopupMenuItem(
+            value: 'import',
+            child: Row(
+              children: [
+                Icon(Icons.file_download_outlined, size: 20, color: Color(0xFF3D4A42)),
+                SizedBox(width: 12),
+                Text('Import dari CSV', style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 14)),
+              ],
+            ),
+          ),
+        ],
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF006948),
+                Color(0xFF00855D),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(0, 105, 72, 0.3),
+                blurRadius: 16,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Icon(Icons.add, color: Colors.white, size: 24),
+          ),
+        ),
+      ),
     );
   }
 
@@ -319,4 +613,3 @@ class ProductManagementScreen extends ConsumerWidget {
     );
   }
 }
-

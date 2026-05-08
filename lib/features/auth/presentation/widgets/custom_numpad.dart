@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
-
-const _surface = Color(0xFF1C1E26);
-const _surfaceActive = Color(0xFF252830);
-const _textPrimary = Color(0xFFFFFFFF);
-const _textMuted = Color(0xFF84958A);
+import '../../../../core/theme/app_theme.dart';
 
 class CustomNumpad extends StatelessWidget {
   final Function(String) onNumberKey;
-  final VoidCallback onBiometricTap;
+  final VoidCallback? onBiometricTap;
   final VoidCallback onBackspaceTap;
 
   const CustomNumpad({
     super.key,
     required this.onNumberKey,
-    required this.onBiometricTap,
+    this.onBiometricTap,
     required this.onBackspaceTap,
   });
 
@@ -31,7 +27,10 @@ class CustomNumpad extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildActionButton(Icons.fingerprint, onBiometricTap),
+            if (onBiometricTap != null)
+              _buildActionButton(Icons.fingerprint, onBiometricTap!)
+            else
+              const SizedBox(width: 80, height: 80),
             _buildNumberButton('0'),
             _buildActionButton(Icons.backspace_outlined, onBackspaceTap),
           ],
@@ -43,7 +42,7 @@ class CustomNumpad extends StatelessWidget {
   Widget _buildRow(List<String> numbers) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: numbers.map((num) => _buildNumberButton(num)).toList(),
+      children: numbers.map((n) => _buildNumberButton(n)).toList(),
     );
   }
 
@@ -52,11 +51,9 @@ class CustomNumpad extends StatelessWidget {
       onTap: () => onNumberKey(number),
       child: Text(
         number,
-        style: const TextStyle(
-          fontFamily: 'SpaceMono', // Fallback spacing monospace
-          fontSize: 32,
-          fontWeight: FontWeight.w600,
-          color: _textPrimary,
+        style: AppTypography.displayLarge.copyWith(
+          color: AppColors.textPrimaryLight,
+          fontWeight: FontWeight.w400, // Thinner for elegance
         ),
       ),
     );
@@ -67,7 +64,7 @@ class CustomNumpad extends StatelessWidget {
       onTap: onTap,
       child: Icon(
         icon,
-        color: _textMuted,
+        color: AppColors.textPrimaryLight,
         size: 28,
       ),
     );
@@ -104,8 +101,8 @@ class _NumpadButtonState extends State<_NumpadButton> {
         width: 80,
         height: 80,
         decoration: BoxDecoration(
-          color: _isPressed ? _surfaceActive : _surface,
-          borderRadius: BorderRadius.circular(16),
+          color: _isPressed ? AppColors.surface2Light : Colors.transparent,
+          shape: BoxShape.circle,
         ),
         alignment: Alignment.center,
         child: widget.child,

@@ -4,7 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'migrations/migration_v2.dart';
-import 'migrations/migration_v3.dart';
+
 import 'migrations/migration_v4.dart';
 import 'migrations/migration_v5.dart';
 
@@ -168,6 +168,6 @@ class AppDatabase {
 
   Future<void> close() async {
     final db = await instance.database;
-    db.dispose();
+    db.close();
   }
 }

@@ -57,6 +57,7 @@ dependencies:
   fl_chart: ^0.69.0
   shared_preferences: ^2.3.2
   image_picker: ^1.1.2
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

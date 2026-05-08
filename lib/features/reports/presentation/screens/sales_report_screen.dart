@@ -5,21 +5,21 @@ import 'package:intl/intl.dart';
 
 import '../providers/report_provider.dart';
 
+// DESIGN TOKENS (Light Theme Premium)
+const _background = Color(0xFFF8F9FA);
+const _surface = Color(0xFFFFFFFF);
+const _accent = Color(0xFF006948);
+const _accentLight = Color(0xFF00E5A0);
+const _textPrimary = Color(0xFF191C1D);
+const _textSecondary = Color(0xFF3D4A42);
+const _textMuted = Color(0xFF6D7A72);
 
-// DESIGN TOKENS
-const _background = Color(0xFF111319);
-const _surface = Color(0xFF1E1F26);
-const _surface2 = Color(0xFF191B22);
-const _surface3 = Color(0xFF282A30);
-const _accent = Color(0xFF00E5A0);
-const _textPrimary = Color(0xFFE2E2EB);
-const _textSecondary = Color(0xFFBACBBF);
-const _textMuted = Color(0xFF84958A);
+const _trendPositive = Color(0xFF059669);
+const _trendBlue = Color(0xFF3B82F6);
+const _trendAmber = Color(0xFFF59E0B);
+const _trendRed = Color(0xFFBA1A1A);
 
-const _trendPositive = Color(0xFF00E29E);
-const _trendBlue = Color(0xFFAFC6FF);
-const _trendAmber = Color(0xFFFFBD65);
-const _trendRed = Color(0xFFFFB4AB);
+const _borderThin = Color(0xFFEDEEEF);
 
 class SalesReportScreen extends ConsumerWidget {
   final bool hideAppBar;
@@ -32,26 +32,45 @@ class SalesReportScreen extends ConsumerWidget {
       appBar: hideAppBar
           ? null
           : AppBar(
-              title: const Text('Laporan Penjualan'),
+              title: const Text(
+                'Laporan Penjualan',
+                style: TextStyle(
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: FontWeight.bold,
+                  color: _textPrimary,
+                ),
+              ),
               backgroundColor: _background,
               elevation: 0,
+              iconTheme: const IconThemeData(color: _textPrimary),
             ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const _PeriodTabs(),
-            const SizedBox(height: 24),
-            const _KpiGrid(),
-            const SizedBox(height: 24),
-            const _ChartCard(),
-            const SizedBox(height: 24),
-            const _TopProductsCard(),
-            const SizedBox(height: 24),
-            const _PaymentMethodsCard(),
-          ],
-        ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(24, 16, 24, 8),
+            child: _PeriodTabs(),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: const [
+                  _KpiGrid(),
+                  SizedBox(height: 24),
+                  _ChartCard(),
+                  SizedBox(height: 24),
+                  _TopProductsCard(),
+                  SizedBox(height: 24),
+                  _PaymentMethodsCard(),
+                  SizedBox(height: 100), // padding bottom
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -68,11 +87,11 @@ class _PeriodTabs extends ConsumerWidget {
       lastDate: now,
       builder: (context, child) {
         return Theme(
-          data: ThemeData.dark().copyWith(
-            colorScheme: const ColorScheme.dark(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
               primary: _accent,
               surface: _surface,
-              onPrimary: Color(0xFF006141),
+              onPrimary: Colors.white,
               onSurface: _textPrimary,
             ),
           ),
@@ -95,7 +114,9 @@ class _PeriodTabs extends ConsumerWidget {
     final currentPeriod = ref.watch(reportPeriodProvider);
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.none,
       child: Row(
         children: [
           _buildTab(
@@ -133,17 +154,20 @@ class _PeriodTabs extends ConsumerWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? _accent : _surface3,
-          borderRadius: BorderRadius.circular(12),
+          color: isActive ? const Color(0xFF006948) : const Color(0xFFF3F4F5),
+          borderRadius: BorderRadius.circular(999),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isActive ? const Color(0xFF006141) : _textSecondary,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-            fontSize: 14,
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+              fontSize: 13,
+              color: isActive ? Colors.white : const Color(0xFF6D7A72),
+            ),
           ),
         ),
       ),
@@ -183,7 +207,7 @@ class _KpiGrid extends ConsumerWidget {
           mainAxisSpacing: 16,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 1.5,
+          childAspectRatio: 1.4,
           children: [
             _buildKpiCard(
               title: 'TOTAL OMSET',
@@ -191,7 +215,7 @@ class _KpiGrid extends ConsumerWidget {
               trend: revTrendStr,
               valueColor: _accent,
               trendColor: revTrendStr.startsWith('+') ? _trendPositive : (revTrendStr == '-' ? _textMuted : _trendRed),
-              icon: revTrendStr.startsWith('+') ? Icons.arrow_upward : Icons.arrow_downward
+              icon: revTrendStr.startsWith('+') ? Icons.trending_up : Icons.trending_down
             ),
             _buildKpiCard(
               title: 'TRANSAKSI',
@@ -204,7 +228,7 @@ class _KpiGrid extends ConsumerWidget {
             _buildKpiCard(
               title: 'ITEM TERJUAL',
               value: '${summary.totalItemsSold}',
-              trend: '-', // Items trend missing from summary, simplify for now
+              trend: '-',
               valueColor: _textPrimary,
               trendColor: _trendAmber,
               icon: Icons.inventory_2
@@ -214,7 +238,7 @@ class _KpiGrid extends ConsumerWidget {
               value: currencyFormat.format(summary.avgPerTransaction),
               trend: '-',
               valueColor: _textPrimary,
-              trendColor: _textPrimary,
+              trendColor: _textMuted,
               icon: Icons.analytics
             ),
           ],
@@ -225,25 +249,71 @@ class _KpiGrid extends ConsumerWidget {
 
   Widget _buildKpiCard({required String title, required String value, required String trend, required Color valueColor, required Color trendColor, required IconData icon}) {
     return Container(
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _surface2,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _borderThin, width: 1),
+        color: _surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.03),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title, style: const TextStyle(fontSize: 10, color: _textMuted, letterSpacing: 0.5, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 18, fontFamily: 'SpaceMono', fontWeight: FontWeight.bold, color: valueColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Row(
+            children: [
+              Icon(icon, size: 14, color: _textMuted),
+              const SizedBox(width: 6),
+              Text(
+                title, 
+                style: const TextStyle(
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontSize: 10, 
+                  color: _textMuted, 
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value, 
+            style: TextStyle(
+              fontFamily: 'Space Mono', 
+              fontSize: 16, 
+              fontWeight: FontWeight.bold, 
+              color: valueColor,
+              letterSpacing: -0.5,
+            ), 
+            maxLines: 1, 
+            overflow: TextOverflow.ellipsis,
+          ),
           const Spacer(),
           Row(
             children: [
-              if (trend != '-') Icon(icon, size: 12, color: trendColor),
-              if (trend != '-') const SizedBox(width: 4),
-              Text(trend, style: TextStyle(fontSize: 12, color: trendColor, fontWeight: FontWeight.bold)),
+              if (trend != '-') ...[
+                Icon(
+                  trend.startsWith('+') ? Icons.arrow_upward : Icons.arrow_downward, 
+                  size: 12, 
+                  color: trendColor
+                ),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                trend, 
+                style: TextStyle(
+                  fontFamily: 'Space Mono',
+                  fontSize: 11, 
+                  color: trendColor, 
+                  fontWeight: FontWeight.bold
+                )
+              ),
             ],
           )
         ],
@@ -251,8 +321,6 @@ class _KpiGrid extends ConsumerWidget {
     );
   }
 }
-
-const _borderThin = Color(0xFF2A2F45);
 
 class _ChartCard extends ConsumerWidget {
   const _ChartCard();
@@ -262,34 +330,42 @@ class _ChartCard extends ConsumerWidget {
     final dailyAsync = ref.watch(dailyRevenueProvider);
     final period = ref.watch(reportPeriodProvider);
     
-    // Label depending on period
-    String periodLabel = 'Omset Pilihan';
+    String periodLabel = 'Grafik Penjualan';
     if (period == ReportPeriod.sevenDays) periodLabel = 'Omset 7 Hari Terakhir';
     else if (period == ReportPeriod.today) periodLabel = 'Omset Hari Ini';
     else if (period == ReportPeriod.thirtyDays) periodLabel = 'Omset 30 Hari Terakhir';
     
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _borderThin, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.03),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(periodLabel, style: const TextStyle(color: _textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
+          Text(
+            periodLabel, 
+            style: const TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              color: _textPrimary, 
+              fontSize: 16, 
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           SizedBox(
-            height: 200,
+            height: 220,
             child: dailyAsync.when(
               loading: () => const Center(child: CircularProgressIndicator(color: _accent)),
-              error: (e, _) => Center(child: Text('Error load chart')),
+              error: (e, _) => const Center(child: Text('Gagal memuat grafik', style: TextStyle(color: _trendRed))),
               data: (data) {
                 if (data.isEmpty) {
                   return const Center(child: Text('Tidak ada data', style: TextStyle(color: _textMuted)));
@@ -299,7 +375,25 @@ class _ChartCard extends ConsumerWidget {
                   BarChartData(
                     alignment: BarChartAlignment.spaceAround,
                     maxY: data.fold<double>(0, (max, e) => e.revenue > max ? e.revenue : max) * 1.2,
-                    barTouchData: BarTouchData(enabled: false),
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipColor: (group) => _textPrimary,
+                        tooltipPadding: const EdgeInsets.all(8),
+                        tooltipMargin: 8,
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          return BarTooltipItem(
+                            NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0).format(rod.toY),
+                            const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Space Mono',
+                              fontSize: 12,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                     titlesData: FlTitlesData(
                       show: true,
                       bottomTitles: AxisTitles(
@@ -312,16 +406,16 @@ class _ChartCard extends ConsumerWidget {
                             final date = data[idx].date;
                             String text;
                             if (period == ReportPeriod.today) {
-                              text = DateFormat('HH:mm').format(date); // Not precise if grouping by date, need to adapt if hourly
+                              text = DateFormat('HH:mm').format(date);
                             } else {
-                              text = DateFormat('EE').format(date); // Sen, Sel, Rab
+                              text = DateFormat('dd MMM').format(date);
                             }
                             return Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(text, style: const TextStyle(color: _textMuted, fontSize: 10)),
+                              padding: const EdgeInsets.only(top: 12.0),
+                              child: Text(text, style: const TextStyle(color: _textMuted, fontSize: 10, fontFamily: 'Plus Jakarta Sans', fontWeight: FontWeight.w600)),
                             );
                           },
-                          reservedSize: 28,
+                          reservedSize: 32,
                         ),
                       ),
                       leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -332,7 +426,7 @@ class _ChartCard extends ConsumerWidget {
                       show: true,
                       drawVerticalLine: false,
                       horizontalInterval: data.fold<double>(0, (max, e) => e.revenue > max ? e.revenue : max) / 4 > 0 ? data.fold<double>(0, (max, e) => e.revenue > max ? e.revenue : max) / 4 : 1000,
-                      getDrawingHorizontalLine: (value) => FlLine(color: _textMuted.withValues(alpha: 0.1), strokeWidth: 1),
+                      getDrawingHorizontalLine: (value) => FlLine(color: _borderThin, strokeWidth: 1, dashArray: [4, 4]),
                     ),
                     borderData: FlBorderData(show: false),
                     barGroups: data.asMap().entries.map((entry) {
@@ -345,9 +439,9 @@ class _ChartCard extends ConsumerWidget {
                         barRods: [
                           BarChartRodData(
                             toY: d.revenue,
-                            color: isLast ? _accent : _accent.withValues(alpha: 0.7),
+                            color: isLast ? _accent : _accentLight,
                             width: 16,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ],
                       );
@@ -372,21 +466,36 @@ class _TopProductsCard extends ConsumerWidget {
     final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _surface2,
-        borderRadius: BorderRadius.circular(8),
+        color: _surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.03),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Produk Terlaris', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary)),
-          const SizedBox(height: 16),
+          const Text(
+            'Produk Terlaris', 
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: FontWeight.bold, 
+              fontSize: 16, 
+              color: _textPrimary,
+            ),
+          ),
+          const SizedBox(height: 20),
           topProductsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator(color: _accent)),
-            error: (e, _) => const Center(child: Text('Error', style: TextStyle(color: _textMuted))),
+            error: (e, _) => const Center(child: Text('Error', style: TextStyle(color: _trendRed))),
             data: (products) {
-              if (products.isEmpty) return const Text('Tidak ada penjualan', style: TextStyle(color: _textMuted));
+              if (products.isEmpty) return const Text('Belum ada penjualan', style: TextStyle(color: _textMuted));
 
               return Column(
                 children: products.asMap().entries.map((entry) {
@@ -395,31 +504,66 @@ class _TopProductsCard extends ConsumerWidget {
                   final rank = idx + 1;
                   
                   final isTop1 = rank == 1;
-                  final rankBg = isTop1 ? const Color.fromRGBO(110, 255, 192, 0.1) : const Color(0xFF33343B);
-                  final rankColor = isTop1 ? _trendPositive : _textMuted;
+                  final rankBg = isTop1 ? const Color(0xFFC0EDD3) : _borderThin;
+                  final rankColor = isTop1 ? const Color(0xFF002114) : _textMuted;
                   
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
+                    padding: const EdgeInsets.only(bottom: 16.0),
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: rankBg, borderRadius: BorderRadius.circular(4)),
-                          child: Text('#0$rank', style: TextStyle(color: rankColor, fontSize: 10, fontWeight: FontWeight.bold)),
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: rankBg, 
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '#$rank', 
+                              style: TextStyle(
+                                fontFamily: 'Space Mono',
+                                color: rankColor, 
+                                fontSize: 12, 
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(prod.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: _textPrimary)),
-                              Text('${prod.qtySold} terjual', style: const TextStyle(fontSize: 10, color: _textMuted)),
+                              Text(
+                                prod.productName, 
+                                style: const TextStyle(
+                                  fontFamily: 'Plus Jakarta Sans',
+                                  fontWeight: FontWeight.bold, 
+                                  fontSize: 14, 
+                                  color: _textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${prod.qtySold} terjual', 
+                                style: const TextStyle(
+                                  fontFamily: 'Plus Jakarta Sans',
+                                  fontSize: 12, 
+                                  color: _textMuted,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                         Text(
                           currencyFormat.format(prod.revenue),
-                          style: TextStyle(fontFamily: 'SpaceMono', fontWeight: FontWeight.bold, fontSize: 12, color: isTop1 ? _accent : _textPrimary),
+                          style: TextStyle(
+                            fontFamily: 'Space Mono', 
+                            fontWeight: FontWeight.bold, 
+                            fontSize: 14, 
+                            color: isTop1 ? _accent : _textPrimary,
+                          ),
                         ),
                       ],
                     ),
@@ -442,19 +586,34 @@ class _PaymentMethodsCard extends ConsumerWidget {
     final paymentsAsync = ref.watch(paymentMethodBreakdownProvider);
     
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _surface2,
-        borderRadius: BorderRadius.circular(8),
+        color: _surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.03),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Metode Pembayaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary)),
-          const SizedBox(height: 16),
+          const Text(
+            'Metode Pembayaran', 
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: FontWeight.bold, 
+              fontSize: 16, 
+              color: _textPrimary,
+            ),
+          ),
+          const SizedBox(height: 20),
           paymentsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator(color: _accent)),
-            error: (e, _) => const Center(child: Text('Error', style: TextStyle(color: _textMuted))),
+            error: (e, _) => const Center(child: Text('Error', style: TextStyle(color: _trendRed))),
             data: (methods) {
               if (methods.isEmpty) return const Text('Belum ada transaksi', style: TextStyle(color: _textMuted));
 
@@ -463,52 +622,99 @@ class _PaymentMethodsCard extends ConsumerWidget {
               return Row(
                 children: [
                   SizedBox(
-                    width: 96,
-                    height: 96,
+                    width: 100,
+                    height: 100,
                     child: Stack(
                       children: [
                         PieChart(
                           PieChartData(
-                            sectionsSpace: 2,
+                            sectionsSpace: 4,
                             centerSpaceRadius: 36,
                             sections: methods.entries.map((e) {
                               Color c = _trendBlue;
-                              if (e.key == 'TUNAI') c = const Color(0xFF6EFFC0);
-                              else if (e.key == 'TRANSFER') c = _trendAmber;
+                              if (e.key == 'TUNAI') c = const Color(0xFFEDEEEF); // CASH
+                              else if (e.key == 'TRANSFER') c = const Color(0xFFC0EDD3); // QRIS/TRANSFER
                               
                               return PieChartSectionData(
                                 value: e.value,
                                 color: c,
                                 showTitle: false,
-                                radius: 10,
+                                radius: 12,
                               );
                             }).toList(),
                           ),
                         ),
-                        const Center(
-                          child: Text('TOTAL', style: TextStyle(fontFamily: 'SpaceMono', fontWeight: FontWeight.bold, fontSize: 10, color: _textPrimary)),
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'TOTAL', 
+                                style: TextStyle(
+                                  fontFamily: 'Plus Jakarta Sans', 
+                                  fontWeight: FontWeight.w600, 
+                                  fontSize: 10, 
+                                  color: _textMuted,
+                                ),
+                              ),
+                              Text(
+                                NumberFormat.compact(locale: 'id_ID').format(total),
+                                style: const TextStyle(
+                                  fontFamily: 'Space Mono',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: _textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 32),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: methods.entries.map((e) {
                         final pct = (e.value / total) * 100;
                         Color c = _trendBlue;
-                        if (e.key == 'TUNAI') c = const Color(0xFF6EFFC0);
-                        else if (e.key == 'TRANSFER') c = _trendAmber;
+                        if (e.key == 'TUNAI') c = const Color(0xFFEDEEEF);
+                        else if (e.key == 'TRANSFER') c = const Color(0xFFC0EDD3);
                         
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
+                          padding: const EdgeInsets.only(bottom: 12.0),
                           child: Row(
                             children: [
-                              Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
-                              const SizedBox(width: 8),
-                              Expanded(child: Text(e.key, style: const TextStyle(fontSize: 10, fontFamily: 'Inter', fontWeight: FontWeight.w500, color: _textPrimary))),
-                              Text('${pct.toStringAsFixed(1)}%', style: const TextStyle(fontFamily: 'SpaceMono', fontSize: 10, fontWeight: FontWeight.bold, color: _textPrimary)),
+                              Container(
+                                width: 12, 
+                                height: 12, 
+                                decoration: BoxDecoration(
+                                  color: c, 
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  e.key, 
+                                  style: const TextStyle(
+                                    fontFamily: 'Plus Jakarta Sans', 
+                                    fontWeight: FontWeight.w600, 
+                                    fontSize: 12, 
+                                    color: _textSecondary,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${pct.toStringAsFixed(1)}%', 
+                                style: const TextStyle(
+                                  fontFamily: 'Space Mono', 
+                                  fontSize: 12, 
+                                  fontWeight: FontWeight.bold, 
+                                  color: _textPrimary,
+                                ),
+                              ),
                             ],
                           ),
                         );

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_text_input.dart';
 import '../models/cart_state.dart';
 
 class DiscountBottomSheet extends ConsumerStatefulWidget {
@@ -64,9 +67,9 @@ class _DiscountBottomSheetState extends ConsumerState<DiscountBottomSheet> {
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceLight,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -75,22 +78,25 @@ class _DiscountBottomSheetState extends ConsumerState<DiscountBottomSheet> {
             // Handle
             Center(
               child: Container(
-                width: 40,
+                width: 48,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
+                margin: const EdgeInsets.only(bottom: 24),
                 decoration: BoxDecoration(
-                  color: Colors.grey[600],
+                  color: AppColors.borderLight,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
 
-            const Text(
+            Text(
               'Tambah Diskon',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: AppColors.textPrimaryLight,
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // Toggle Rp / %
             Row(
@@ -120,23 +126,15 @@ class _DiscountBottomSheetState extends ConsumerState<DiscountBottomSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Input
-            TextField(
+            AppTextInput(
+              label: _type == DiscountType.nominal ? 'Jumlah Diskon (Rp)' : 'Persentase Diskon (%)',
               controller: _controller,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: false),
-              decoration: InputDecoration(
-                labelText:
-                    _type == DiscountType.nominal ? 'Jumlah Diskon (Rp)' : 'Persentase Diskon (%)',
-                hintText: _type == DiscountType.nominal ? '10000' : '10',
-                prefixIcon: Icon(
-                    _type == DiscountType.nominal ? Icons.money : Icons.percent),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                suffixText: _type == DiscountType.percent ? '%' : null,
-              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: false),
+              hint: _type == DiscountType.nominal ? '10000' : '10',
+              prefixIcon: _type == DiscountType.nominal ? Icons.money : Icons.percent,
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 12),
@@ -145,26 +143,26 @@ class _DiscountBottomSheetState extends ConsumerState<DiscountBottomSheet> {
             if (_previewDiscount > 0)
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                  color: AppColors.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Potongan harga:',
-                        style: TextStyle(color: Colors.green)),
+                    Text('Potongan harga:',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.primary)),
                     Text(
                       '- ${CurrencyFormatter.format(_previewDiscount)}',
-                      style: const TextStyle(
-                          color: Colors.green, fontWeight: FontWeight.bold),
+                      style: AppTypography.displaySmall.copyWith(
+                          color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ],
                 ),
               ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 32),
 
             // Actions
             Row(
@@ -172,19 +170,19 @@ class _DiscountBottomSheetState extends ConsumerState<DiscountBottomSheet> {
                 // Hapus diskon
                 if (widget.currentDiscount > 0)
                   Expanded(
-                    child: OutlinedButton.icon(
+                    child: AppButton(
+                      text: 'Hapus',
+                      isPrimary: false,
                       onPressed: () =>
                           Navigator.pop(context, const _DiscountResult.clear()),
-                      icon: const Icon(Icons.delete_outline,
-                          color: Colors.redAccent),
-                      label: const Text('Hapus',
-                          style: TextStyle(color: Colors.redAccent)),
                     ),
                   ),
-                if (widget.currentDiscount > 0) const SizedBox(width: 12),
+                if (widget.currentDiscount > 0) const SizedBox(width: 16),
                 Expanded(
                   flex: 2,
-                  child: FilledButton(
+                  child: AppButton(
+                    text: 'Terapkan',
+                    isPrimary: true,
                     onPressed: _isValid
                         ? () {
                             final val =
@@ -193,7 +191,6 @@ class _DiscountBottomSheetState extends ConsumerState<DiscountBottomSheet> {
                                 context, _DiscountResult.set(val, _type));
                           }
                         : null,
-                    child: const Text('Terapkan'),
                   ),
                 ),
               ],
@@ -220,29 +217,28 @@ class _TypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.15) : Colors.transparent,
+          color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surfaceLight,
           border: Border.all(
-              color: isSelected ? color : Colors.grey[600]!, width: 1.5),
-          borderRadius: BorderRadius.circular(10),
+              color: isSelected ? AppColors.primary : AppColors.borderLight, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 18, color: isSelected ? color : Colors.grey[400]),
-            const SizedBox(width: 6),
+            Icon(icon, size: 18, color: isSelected ? AppColors.primary : AppColors.textMutedLight),
+            const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? color : Colors.grey[400],
+                color: isSelected ? AppColors.primary : AppColors.textMutedLight,
                 fontWeight:
-                    isSelected ? FontWeight.bold : FontWeight.normal,
+                    isSelected ? FontWeight.bold : FontWeight.w600,
                 fontSize: 13,
               ),
             ),

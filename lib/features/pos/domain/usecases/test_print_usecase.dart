@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import '../../../../core/services/printer/printer_service.dart';
-import '../../../../core/di/providers.dart';
+
 import '../../../settings/data/settings_repository.dart';
 
 final testPrintUseCaseProvider = Provider<TestPrintUseCase>((ref) {

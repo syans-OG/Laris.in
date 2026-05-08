@@ -9,6 +9,7 @@ import '../../../../features/transactions/domain/entities/transaction_entity.dar
 import '../../../../shared/presentation/layouts/master_layout.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../domain/usecases/print_receipt_usecase.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class DigitalReceiptScreen extends ConsumerStatefulWidget {
   final TransactionEntity transaction;
@@ -135,7 +136,7 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red.shade700,
+        backgroundColor: AppColors.error,
         duration: const Duration(seconds: 3),
       ),
     );
@@ -155,7 +156,7 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
       child: GestureDetector(
         onTap: _stopCountdown,
         child: Scaffold(
-          backgroundColor: const Color(0xFF0F1117),
+          backgroundColor: AppColors.backgroundLight,
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -170,20 +171,20 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
                     child: Container(
                       width: 80, height: 80,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00E5A0).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF00E5A0), width: 1.5),
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.primary, width: 1.5),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF00E5A0).withOpacity(0.15),
+                            color: AppColors.primary.withValues(alpha: 0.15),
                             blurRadius: 40,
                             offset: const Offset(0, 0),
                           ),
                         ],
                       ),
                       child: const Icon(
-                        Icons.print_rounded,
-                        color: Color(0xFF00E5A0),
+                        Icons.check_circle_outline,
+                        color: AppColors.primary,
                         size: 40,
                       ),
                     ),
@@ -195,7 +196,7 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
                   const Text(
                     'Pembayaran Berhasil!',
                     style: TextStyle(
-                      color: Color(0xFF00E5A0),
+                      color: AppColors.primary,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
@@ -226,8 +227,8 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
                           icon: const Icon(Icons.share_outlined, size: 18),
                           label: const Text('Bagikan Struk'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                            foregroundColor: AppColors.textPrimaryLight,
+                            side: const BorderSide(color: AppColors.borderLight),
                             minimumSize: const Size(0, 56),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -238,8 +239,8 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
                         child: FilledButton(
                           onPressed: _navigateToPOS,
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF33343B),
-                            foregroundColor: const Color(0xFF00E5A0),
+                            backgroundColor: AppColors.surface2Light,
+                            foregroundColor: AppColors.textPrimaryLight,
                             minimumSize: const Size(0, 56),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -255,22 +256,22 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
                   if (_countdownActive)
                     Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF191B22),
+                          color: AppColors.surfaceLight,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.05)),
+                          border: Border.all(color: AppColors.borderLight),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF84958A)),
-                            const SizedBox(width: 6),
+                            const Icon(Icons.timer_outlined, size: 16, color: AppColors.textMutedLight),
+                            const SizedBox(width: 8),
                             Text(
                               'Kembali ke kasir dalam $_secondsRemaining detik...',
                               style: const TextStyle(
-                                color: Color(0xFF84958A),
-                                fontSize: 12,
+                                color: AppColors.textMutedLight,
+                                fontSize: 13,
                               ),
                             ),
                           ],
@@ -296,8 +297,8 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
           icon: const Icon(Icons.print_outlined),
           label: const Text('CETAK STRUK', style: TextStyle(fontWeight: FontWeight.bold)),
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF00E5A0),
-            foregroundColor: Colors.black,
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.white,
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
@@ -306,7 +307,7 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
         return FilledButton(
           onPressed: null,
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF00E5A0),
+            backgroundColor: AppColors.primary,
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
@@ -317,12 +318,12 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
                 width: 18, height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.black,
+                  color: AppColors.white,
                 ),
               ),
-              SizedBox(width: 8),
+              SizedBox(width: 12),
               Text('Mencetak...',
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
             ],
           ),
         );
@@ -332,8 +333,8 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
           icon: const Icon(Icons.check, size: 18),
           label: const Text('Tercetak ✓', style: TextStyle(fontWeight: FontWeight.bold)),
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF1B5E20),
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.success,
+            foregroundColor: AppColors.white,
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
@@ -341,11 +342,12 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
       case _PrintButtonState.failed:
         return FilledButton.icon(
           onPressed: _onPrintTapped,
-          icon: const Icon(Icons.warning_amber_outlined, size: 18, color: Color(0xFFFFB4AB)),
+          icon: const Icon(Icons.warning_amber_outlined, size: 18, color: AppColors.error),
           label: const Text('⚠ Gagal Mencetak · Coba Lagi',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFFB4AB))),
+              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.error)),
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF33343B),
+            backgroundColor: AppColors.surfaceLight,
+            side: const BorderSide(color: AppColors.error),
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
@@ -376,12 +378,12 @@ class DigitalReceiptCard extends ConsumerWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1F26),
+        color: AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF3B4A41).withOpacity(0.1)),
+        border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -403,7 +405,7 @@ class DigitalReceiptCard extends ConsumerWidget {
             Text(
               storeName.toUpperCase(),
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimaryLight,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 2.0,
@@ -415,12 +417,12 @@ class DigitalReceiptCard extends ConsumerWidget {
           if (showAddress) ...[
             Text(
               storeAddress,
-              style: const TextStyle(color: Color(0xFF84958A), fontSize: 11),
+              style: const TextStyle(color: AppColors.textMutedLight, fontSize: 12),
               textAlign: TextAlign.center,
             ),
             Text(
               'Telp: $storePhone',
-              style: const TextStyle(color: Color(0xFF84958A), fontSize: 11),
+              style: const TextStyle(color: AppColors.textMutedLight, fontSize: 12),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -435,10 +437,10 @@ class DigitalReceiptCard extends ConsumerWidget {
           const Text(
             'TOTAL PEMBAYARAN',
             style: TextStyle(
-              color: Color(0xFF84958A),
-              fontSize: 11,
+              color: AppColors.textMutedLight,
+              fontSize: 12,
               letterSpacing: 1.4,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
@@ -446,11 +448,10 @@ class DigitalReceiptCard extends ConsumerWidget {
           // Total Large Amount
           Text(
             CurrencyFormatter.format(transaction.total),
-            style: const TextStyle(
-              color: Color(0xFF00E5A0),
-              fontSize: 42,
+            style: AppTypography.displayLarge.copyWith(
+              color: AppColors.primary,
+              fontSize: 36,
               fontWeight: FontWeight.bold,
-              fontFamily: 'SpaceMono',
             ),
           ),
           const SizedBox(height: 24),
@@ -477,14 +478,14 @@ class DigitalReceiptCard extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         '${item.product?.name ?? "Produk"} x ${item.qty}',
-                        style: const TextStyle(color: Color(0xFFBACBBF), fontSize: 13),
+                        style: const TextStyle(color: AppColors.textMutedLight, fontSize: 13),
                       ),
                     ),
                     _buildDashedConnector(), // Just visual dashed connector gap
                     const SizedBox(width: 8),
                     Text(
                       CurrencyFormatter.formatCompact(item.subtotal),
-                      style: const TextStyle(color: Color(0xFFE2E2EB), fontSize: 13),
+                      style: const TextStyle(color: AppColors.textPrimaryLight, fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -500,21 +501,22 @@ class DigitalReceiptCard extends ConsumerWidget {
           _summaryRow('Subtotal', CurrencyFormatter.format(_subtotal)),
           if (transaction.discount > 0)
             _summaryRow('Diskon', '-${CurrencyFormatter.format(transaction.discount)}',
-                valueColor: const Color(0xFF81C784)),
+                valueColor: AppColors.primary),
           if (transaction.tax > 0)
             _summaryRow('Pajak', '+${CurrencyFormatter.format(transaction.tax)}',
-                valueColor: const Color(0xFFFFB74D)),
+                valueColor: AppColors.textPrimaryLight),
           _summaryRow('TOTAL', CurrencyFormatter.format(transaction.total),
-              bold: true, valueColor: const Color(0xFF00E5A0)),
+              bold: true, valueColor: AppColors.primary),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
           // Payment Box
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF0C0E14),
-              borderRadius: BorderRadius.circular(8),
+              color: AppColors.surface2Light,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.borderLight),
             ),
             child: Column(
               children: [
@@ -523,26 +525,26 @@ class DigitalReceiptCard extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.payment_rounded, size: 14, color: Color(0xFFBACBBF)),
-                        const SizedBox(width: 6),
-                        Text(transaction.paymentMethod, style: const TextStyle(color: Color(0xFFBACBBF), fontSize: 12)),
+                        const Icon(Icons.payment_rounded, size: 16, color: AppColors.textMutedLight),
+                        const SizedBox(width: 8),
+                        Text(transaction.paymentMethod, style: const TextStyle(color: AppColors.textMutedLight, fontSize: 13, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     Text(CurrencyFormatter.format(transaction.paidAmount),
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                        style: const TextStyle(color: AppColors.textPrimaryLight, fontSize: 13, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 if (transaction.changeAmount > 0) ...[
                   const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Divider(color: Color(0xFF2A2F45), height: 1),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Divider(color: AppColors.borderLight, height: 1),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Kembalian', style: TextStyle(color: Color(0xFFFFBD65), fontSize: 12)),
+                      const Text('Kembalian', style: TextStyle(color: AppColors.textPrimaryLight, fontSize: 13, fontWeight: FontWeight.w600)),
                       Text(CurrencyFormatter.format(transaction.changeAmount),
-                          style: const TextStyle(color: Color(0xFFFFBD65), fontSize: 12, fontWeight: FontWeight.bold)),
+                          style: const TextStyle(color: AppColors.textPrimaryLight, fontSize: 13, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
@@ -557,7 +559,7 @@ class DigitalReceiptCard extends ConsumerWidget {
             Text(
               ref.watch(storeFooterProvider),
               style: const TextStyle(
-                color: Color(0xFF84958A),
+                color: AppColors.textMutedLight,
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
               ),
@@ -571,12 +573,12 @@ class DigitalReceiptCard extends ConsumerWidget {
 
   Widget _infoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Color(0xFF84958A), fontSize: 11)),
-          Text(value, style: const TextStyle(color: Color(0xFFBACBBF), fontSize: 11)),
+          Text(label, style: const TextStyle(color: AppColors.textMutedLight, fontSize: 12)),
+          Text(value, style: const TextStyle(color: AppColors.textPrimaryLight, fontSize: 12, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -584,20 +586,20 @@ class DigitalReceiptCard extends ConsumerWidget {
 
   Widget _summaryRow(String label, String value, {bool bold = false, Color? valueColor}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
               style: TextStyle(
-                  color: bold ? Colors.white : const Color(0xFF84958A),
+                  color: bold ? AppColors.textPrimaryLight : AppColors.textMutedLight,
                   fontSize: bold ? 14 : 13,
-                  fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
+                  fontWeight: bold ? FontWeight.bold : FontWeight.w500)),
           Text(value,
               style: TextStyle(
-                  color: valueColor ?? Colors.white,
-                  fontSize: bold ? 14 : 13,
-                  fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
+                  color: valueColor ?? AppColors.textPrimaryLight,
+                  fontSize: bold ? 16 : 13,
+                  fontWeight: bold ? FontWeight.bold : FontWeight.w600)),
         ],
       ),
     );
@@ -607,7 +609,7 @@ class DigitalReceiptCard extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final boxWidth = constraints.constrainWidth();
-        const dashWidth = 5.0;
+        const dashWidth = 6.0;
         const dashHeight = 1.0;
         final dashCount = (boxWidth / (2 * dashWidth)).floor();
         return Flex(
@@ -618,7 +620,7 @@ class DigitalReceiptCard extends ConsumerWidget {
               width: dashWidth,
               height: dashHeight,
               child: DecoratedBox(
-                decoration: BoxDecoration(color: Color(0xFF2A2F45)),
+                decoration: BoxDecoration(color: AppColors.borderLight),
               ),
             );
           }),
@@ -632,7 +634,7 @@ class DigitalReceiptCard extends ConsumerWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final boxWidth = constraints.constrainWidth();
-          const dashWidth = 3.0;
+          const dashWidth = 4.0;
           const dashHeight = 1.0;
           final dashCount = (boxWidth / (2 * dashWidth)).floor();
           if (dashCount <= 0) return const SizedBox.shrink();
@@ -644,7 +646,7 @@ class DigitalReceiptCard extends ConsumerWidget {
                 width: dashWidth,
                 height: dashHeight,
                 child: DecoratedBox(
-                  decoration: BoxDecoration(color: Color(0xFF33343B)),
+                  decoration: BoxDecoration(color: AppColors.borderLight),
                 ),
               );
             }),

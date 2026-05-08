@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../providers/stock_controller.dart';
 import '../widgets/product_stock_tile.dart';
 import '../widgets/stock_adjustment_bottom_sheet.dart';
 
-const _background = Color(0xFF0E1015);
-const _accent = Color(0xFF00E5A0);
-const _lowStock = Color(0xFFFFB4AB);
-const _textPrimary = Color(0xFFFFFFFF);
-const _textMuted = Color(0xFF84958A);
-const _textSecondary = Color(0xFFBACBBF);
+const _background = AppColors.backgroundLight;
+const _accent = AppColors.primary;
+const _lowStock = AppColors.error;
+const _textPrimary = AppColors.textPrimaryLight;
+const _textMuted = AppColors.textMutedLight;
+const _textSecondary = AppColors.textMutedLight;
+
 
 class StockManagementScreen extends ConsumerWidget {
   final bool hideAppBar;
@@ -53,7 +55,7 @@ class StockManagementScreen extends ConsumerWidget {
                   child: Text(
                     '${controller.lowStockProducts.length}',
                     style: const TextStyle(
-                        color: Color(0xFF0E1015),
+                        color: AppColors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.bold),
                   ),

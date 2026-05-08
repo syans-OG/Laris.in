@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import 'custom_numpad.dart';
 import 'pin_indicator.dart';
-
-const _surface2 = Color(0xFF191B22);
-const _textPrimary = Color(0xFFFFFFFF);
-const _textSecondary = Color(0xFFBACBBF);
-const _textMuted = Color(0xFF84958A);
-const _accent = Color(0xFF00E5A0);
-const _error = Color(0xFFFFB4AB);
 
 class PinBottomSheet extends ConsumerWidget {
   const PinBottomSheet({super.key});
@@ -19,6 +13,7 @@ class PinBottomSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewModel = ref.watch(loginViewModelProvider);
     final cashier = viewModel.selectedCashier;
+    final theme = Theme.of(context);
 
     // Listen for success to automatically close the bottom sheet
     ref.listen(loginViewModelProvider, (previous, next) {
@@ -32,76 +27,31 @@ class PinBottomSheet extends ConsumerWidget {
     if (cashier == null) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 48),
       decoration: const BoxDecoration(
-        color: _surface2,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Drag handle
           Container(
-            width: 40,
+            width: 48,
             height: 4,
             decoration: BoxDecoration(
-              color: _textMuted.withValues(alpha: 0.3),
+              color: AppColors.borderLight,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 24),
-          
-          // Profil Kasir Mini
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  image: cashier.avatarUrl != null 
-                      ? DecorationImage(image: AssetImage(cashier.avatarUrl!)) // fallback
-                      : const DecorationImage(image: AssetImage('assets/images/avatar_placeholder.png')),
-                ),
-                child: cashier.avatarUrl == null
-                    ? const Center(child: Icon(Icons.person, size: 16, color: _textSecondary))
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    cashier.name,
-                    style: const TextStyle(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  Text(
-                    cashier.role.toUpperCase(),
-                    style: const TextStyle(
-                      color: _accent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
           const SizedBox(height: 32),
           
-          // PIN Indicator
-          const Text(
-            'MASUKKAN PIN',
-            style: TextStyle(
-              color: _textMuted,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
+          // PIN Indicator Title
+          Text(
+            'Masukkan PIN untuk ${cashier.name}',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.textPrimaryLight,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 16),
@@ -116,22 +66,20 @@ class PinBottomSheet extends ConsumerWidget {
                 ? Text(
                     viewModel.errorMessage!,
                     style: const TextStyle(
-                      color: _error,
+                      color: AppColors.error,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
                   )
                 : const SizedBox.shrink(),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
           // Custom Numpad
           CustomNumpad(
-            onNumberKey: (num) => ref.read(loginViewModelProvider).addPinDigit(num),
+            onNumberKey: (n) => ref.read(loginViewModelProvider).addPinDigit(n),
             onBackspaceTap: () => ref.read(loginViewModelProvider).removePinDigit(),
-            onBiometricTap: () {
-              // TODO: Implement biometric auth
-            },
+            onBiometricTap: null, // Removed for cleaner UI if not needed yet
           ),
           const SizedBox(height: 32),
           
@@ -139,13 +87,10 @@ class PinBottomSheet extends ConsumerWidget {
           Center(
             child: TextButton(
               onPressed: () {},
-              child: const Text(
-                'Lupa PIN? Hubungi Admin',
-                style: TextStyle(
-                  color: _textMuted,
-                  fontSize: 12,
-                  decoration: TextDecoration.underline,
-                  decorationColor: _textMuted,
+              child: Text(
+                'Lupa PIN?',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: AppColors.primary,
                 ),
               ),
             ),
