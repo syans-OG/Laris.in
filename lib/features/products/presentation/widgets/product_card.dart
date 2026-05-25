@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -17,6 +18,13 @@ class ProductCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = theme.colorScheme.surface;
+    final elevatedSurfaceColor = theme.colorScheme.surfaceContainerHighest;
+    final textColor = theme.colorScheme.onSurface;
+    final mutedColor = theme.colorScheme.onSurfaceVariant;
+
     final cartState = ref.watch(cartProvider);
     final cartItem = cartState.items.cast<dynamic?>().firstWhere(
       (item) => item?.product.id == product.id, 
@@ -29,11 +37,12 @@ class ProductCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
+          border: Border.all(color: theme.colorScheme.outline.withOpacity(isDark ? 0.28 : 0.08)),
+          boxShadow: [
             BoxShadow(
-              color: Color.fromRGBO(0, 33, 20, 0.03),
+              color: isDark ? const Color.fromRGBO(0, 0, 0, 0.18) : const Color.fromRGBO(0, 33, 20, 0.03),
               blurRadius: 12,
               offset: Offset(0, 2),
             ),
@@ -49,16 +58,11 @@ class ProductCard extends ConsumerWidget {
                   flex: 3,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F5),
+                      color: elevatedSurfaceColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                        ? Image.network(product.imageUrl!, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.inventory_2_outlined, color: AppColors.textMutedLight)))
-                        : const Center(
-                            child: Icon(Icons.inventory_2_outlined, size: 40, color: AppColors.textMutedLight),
-                          ),
+                    child: _buildProductImage(product.imageUrl, mutedColor),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -72,11 +76,11 @@ class ProductCard extends ConsumerWidget {
                         product.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                           height: 1.25,
-                          color: const Color(0xFF191C1D),
+                          color: textColor,
                         ),
                       ),
                       Row(
@@ -97,7 +101,7 @@ class ProductCard extends ConsumerWidget {
                             width: 32,
                             height: 32,
                             decoration: BoxDecoration(
-                              color: qtyInCart > 0 ? const Color(0xFF00855D) : const Color(0xFFF3F4F5),
+                              color: qtyInCart > 0 ? const Color(0xFF00855D) : elevatedSurfaceColor,
                               shape: BoxShape.circle,
                               boxShadow: qtyInCart > 0 ? const [
                                 BoxShadow(
@@ -110,7 +114,7 @@ class ProductCard extends ConsumerWidget {
                             child: Icon(
                               Icons.add,
                               size: 16,
-                              color: qtyInCart > 0 ? Colors.white : const Color(0xFF191C1D),
+                              color: qtyInCart > 0 ? Colors.white : textColor,
                             ),
                           ),
                         ],
@@ -152,6 +156,40 @@ class ProductCard extends ConsumerWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProductImage(String? imageUrl, Color mutedColor) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Center(
+        child: Icon(Icons.inventory_2_outlined, size: 40, color: mutedColor),
+      );
+    }
+
+    final isNetworkImage = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+    if (isNetworkImage) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Center(
+          child: Icon(Icons.inventory_2_outlined, color: mutedColor),
+        ),
+      );
+    }
+
+    final file = File(imageUrl);
+    if (!file.existsSync()) {
+      return Center(
+        child: Icon(Icons.inventory_2_outlined, size: 40, color: mutedColor),
+      );
+    }
+
+    return Image.file(
+      file,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Center(
+        child: Icon(Icons.inventory_2_outlined, color: mutedColor),
       ),
     );
   }

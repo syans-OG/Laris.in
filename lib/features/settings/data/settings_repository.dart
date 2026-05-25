@@ -5,6 +5,9 @@ class SettingsRepository {
   static const _keyTaxEnabled = 'tax_enabled';
   static const _keyTaxRate = 'tax_rate';
   static const _keyDiscountEnabled = 'discount_enabled';
+  static const _keyQrisEnabled = 'qris_enabled';
+  static const _keyQrisImagePath = 'qris_image_path';
+  static const _keyThemeMode = 'theme_mode';
 
   // Store Identity
   static const _keyStoreName = 'store_name';
@@ -27,10 +30,22 @@ class SettingsRepository {
   bool get taxEnabled => _prefs.getBool(_keyTaxEnabled) ?? false;
   double get taxRate => _prefs.getDouble(_keyTaxRate) ?? 11.0;
   bool get discountEnabled => _prefs.getBool(_keyDiscountEnabled) ?? false;
+  bool get qrisEnabled => _prefs.getBool(_keyQrisEnabled) ?? false;
+  String? get qrisImagePath => _prefs.getString(_keyQrisImagePath);
+  String get themeMode => _prefs.getString(_keyThemeMode) ?? 'light';
 
   Future<void> setTaxEnabled(bool value) async => _prefs.setBool(_keyTaxEnabled, value);
   Future<void> setTaxRate(double value) async => _prefs.setDouble(_keyTaxRate, value);
   Future<void> setDiscountEnabled(bool value) async => _prefs.setBool(_keyDiscountEnabled, value);
+  Future<void> setQrisEnabled(bool value) async => _prefs.setBool(_keyQrisEnabled, value);
+  Future<void> setThemeMode(String value) async => _prefs.setString(_keyThemeMode, value);
+  Future<void> setQrisImagePath(String? value) async {
+    if (value == null) {
+      await _prefs.remove(_keyQrisImagePath);
+    } else {
+      await _prefs.setString(_keyQrisImagePath, value);
+    }
+  }
 
   // ── Store Identity ──────────────────────────────────
   String get storeName => _prefs.getString(_keyStoreName) ?? 'Laris.in';
@@ -86,6 +101,18 @@ final taxRateProvider = StateProvider<double>((ref) {
 
 final discountEnabledProvider = StateProvider<bool>((ref) {
   return ref.watch(settingsRepositoryProvider).discountEnabled;
+});
+
+final qrisEnabledProvider = StateProvider<bool>((ref) {
+  return ref.watch(settingsRepositoryProvider).qrisEnabled;
+});
+
+final qrisImagePathProvider = StateProvider<String?>((ref) {
+  return ref.watch(settingsRepositoryProvider).qrisImagePath;
+});
+
+final themeModeProvider = StateProvider<String>((ref) {
+  return ref.watch(settingsRepositoryProvider).themeMode;
 });
 
 // Store Identity Providers

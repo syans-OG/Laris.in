@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../reports/presentation/screens/sales_report_screen.dart';
 import 'riwayat_admin_screen.dart';
-import '../../../../core/theme/app_theme.dart';
 
 class LaporanScreen extends StatefulWidget {
   const LaporanScreen({super.key});
@@ -31,8 +30,10 @@ class _LaporanScreenState extends State<LaporanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -43,12 +44,12 @@ class _LaporanScreenState extends State<LaporanScreen> {
                 children: [
                   Text(
                     _currentIndex == 0 ? 'Laporan Penjualan' : 'Riwayat Transaksi',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
                       letterSpacing: -0.5,
-                      color: Color(0xFF191C1D),
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -62,7 +63,7 @@ class _LaporanScreenState extends State<LaporanScreen> {
                 height: 48,
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE7E8E9),
+                  color: theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -111,12 +112,14 @@ class _LaporanScreenState extends State<LaporanScreen> {
     required bool isActive,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         decoration: BoxDecoration(
-          color: isActive ? Colors.white : Colors.transparent,
+          color: isActive ? theme.colorScheme.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           boxShadow: isActive
               ? const [
@@ -135,7 +138,7 @@ class _LaporanScreenState extends State<LaporanScreen> {
               fontFamily: 'Plus Jakarta Sans',
               fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
               fontSize: 14,
-              color: isActive ? const Color(0xFF191C1D) : const Color(0xFF6D7A72),
+              color: isActive ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),

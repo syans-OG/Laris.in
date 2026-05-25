@@ -5,13 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../providers/report_provider.dart';
 
-// DESIGN TOKENS (Light Theme Premium)
-const _background = Color(0xFFF8F9FA);
-const _surface = Color(0xFFFFFFFF);
 const _accent = Color(0xFF006948);
 const _accentLight = Color(0xFF00E5A0);
-const _textPrimary = Color(0xFF191C1D);
-const _textSecondary = Color(0xFF3D4A42);
 const _textMuted = Color(0xFF6D7A72);
 
 const _trendPositive = Color(0xFF059669);
@@ -19,30 +14,30 @@ const _trendBlue = Color(0xFF3B82F6);
 const _trendAmber = Color(0xFFF59E0B);
 const _trendRed = Color(0xFFBA1A1A);
 
-const _borderThin = Color(0xFFEDEEEF);
-
 class SalesReportScreen extends ConsumerWidget {
   final bool hideAppBar;
   const SalesReportScreen({super.key, this.hideAppBar = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: _background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: hideAppBar
           ? null
           : AppBar(
-              title: const Text(
+              title: Text(
                 'Laporan Penjualan',
                 style: TextStyle(
                   fontFamily: 'Plus Jakarta Sans',
                   fontWeight: FontWeight.bold,
-                  color: _textPrimary,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
-              backgroundColor: _background,
+              backgroundColor: theme.scaffoldBackgroundColor,
               elevation: 0,
-              iconTheme: const IconThemeData(color: _textPrimary),
+              iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
             ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -86,13 +81,12 @@ class _PeriodTabs extends ConsumerWidget {
       firstDate: DateTime(now.year - 5),
       lastDate: now,
       builder: (context, child) {
+        final theme = Theme.of(context);
         return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
               primary: _accent,
-              surface: _surface,
               onPrimary: Colors.white,
-              onSurface: _textPrimary,
             ),
           ),
           child: child!,
@@ -150,13 +144,16 @@ class _PeriodTabs extends ConsumerWidget {
   }
 
   Widget _buildTab({required String label, required bool isActive, required VoidCallback onTap}) {
+    return Builder(builder: (context) {
+      final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF006948) : const Color(0xFFF3F4F5),
+          color: isActive ? const Color(0xFF006948) : theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Center(
@@ -166,12 +163,13 @@ class _PeriodTabs extends ConsumerWidget {
               fontFamily: 'Plus Jakarta Sans',
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
               fontSize: 13,
-              color: isActive ? Colors.white : const Color(0xFF6D7A72),
+              color: isActive ? Colors.white : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
       ),
     );
+    });
   }
 }
 
@@ -181,6 +179,7 @@ class _KpiGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryAsync = ref.watch(reportSummaryProvider);
+    final theme = Theme.of(context);
 
     return summaryAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(color: _accent)),
@@ -210,35 +209,39 @@ class _KpiGrid extends ConsumerWidget {
           childAspectRatio: 1.4,
           children: [
             _buildKpiCard(
+              context: context,
               title: 'TOTAL OMSET',
               value: currencyFormat.format(summary.totalRevenue),
               trend: revTrendStr,
               valueColor: _accent,
-              trendColor: revTrendStr.startsWith('+') ? _trendPositive : (revTrendStr == '-' ? _textMuted : _trendRed),
+              trendColor: revTrendStr.startsWith('+') ? _trendPositive : (revTrendStr == '-' ? theme.colorScheme.onSurfaceVariant : _trendRed),
               icon: revTrendStr.startsWith('+') ? Icons.trending_up : Icons.trending_down
             ),
             _buildKpiCard(
+              context: context,
               title: 'TRANSAKSI',
               value: '${summary.totalTransactions}',
               trend: trxTrendStr,
-              valueColor: _textPrimary,
+              valueColor: Theme.of(context).colorScheme.onSurface,
               trendColor: _trendBlue,
               icon: Icons.receipt_long
             ),
             _buildKpiCard(
+              context: context,
               title: 'ITEM TERJUAL',
               value: '${summary.totalItemsSold}',
               trend: '-',
-              valueColor: _textPrimary,
+              valueColor: Theme.of(context).colorScheme.onSurface,
               trendColor: _trendAmber,
               icon: Icons.inventory_2
             ),
             _buildKpiCard(
+              context: context,
               title: 'RATA-RATA/TRX',
               value: currencyFormat.format(summary.avgPerTransaction),
               trend: '-',
-              valueColor: _textPrimary,
-              trendColor: _textMuted,
+              valueColor: Theme.of(context).colorScheme.onSurface,
+              trendColor: Theme.of(context).colorScheme.onSurfaceVariant,
               icon: Icons.analytics
             ),
           ],
@@ -247,15 +250,19 @@ class _KpiGrid extends ConsumerWidget {
     );
   }
 
-  Widget _buildKpiCard({required String title, required String value, required String trend, required Color valueColor, required Color trendColor, required IconData icon}) {
+  Widget _buildKpiCard({required BuildContext context, required String title, required String value, required String trend, required Color valueColor, required Color trendColor, required IconData icon}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(isDark ? 0.28 : 0.08)),
+        boxShadow: [
           BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.03),
+            color: isDark ? const Color.fromRGBO(0, 0, 0, 0.16) : const Color.fromRGBO(0, 0, 0, 0.03),
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -267,14 +274,14 @@ class _KpiGrid extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: _textMuted),
+              Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: 6),
               Text(
                 title, 
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Plus Jakarta Sans',
                   fontSize: 10, 
-                  color: _textMuted, 
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -329,6 +336,8 @@ class _ChartCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dailyAsync = ref.watch(dailyRevenueProvider);
     final period = ref.watch(reportPeriodProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     
     String periodLabel = 'Grafik Penjualan';
     if (period == ReportPeriod.sevenDays) periodLabel = 'Omset 7 Hari Terakhir';
@@ -338,11 +347,12 @@ class _ChartCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(isDark ? 0.28 : 0.08)),
+        boxShadow: [
           BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.03),
+            color: isDark ? const Color.fromRGBO(0, 0, 0, 0.16) : const Color.fromRGBO(0, 0, 0, 0.03),
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -353,9 +363,9 @@ class _ChartCard extends ConsumerWidget {
         children: [
           Text(
             periodLabel, 
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Plus Jakarta Sans',
-              color: _textPrimary, 
+              color: theme.colorScheme.onSurface,
               fontSize: 16, 
               fontWeight: FontWeight.bold,
             ),
@@ -368,7 +378,7 @@ class _ChartCard extends ConsumerWidget {
               error: (e, _) => const Center(child: Text('Gagal memuat grafik', style: TextStyle(color: _trendRed))),
               data: (data) {
                 if (data.isEmpty) {
-                  return const Center(child: Text('Tidak ada data', style: TextStyle(color: _textMuted)));
+                  return Center(child: Text('Tidak ada data', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)));
                 }
 
                 return BarChart(
@@ -378,7 +388,7 @@ class _ChartCard extends ConsumerWidget {
                     barTouchData: BarTouchData(
                       enabled: true,
                       touchTooltipData: BarTouchTooltipData(
-                        getTooltipColor: (group) => _textPrimary,
+                        getTooltipColor: (group) => theme.colorScheme.inverseSurface,
                         tooltipPadding: const EdgeInsets.all(8),
                         tooltipMargin: 8,
                         getTooltipItem: (group, groupIndex, rod, rodIndex) {
@@ -412,7 +422,7 @@ class _ChartCard extends ConsumerWidget {
                             }
                             return Padding(
                               padding: const EdgeInsets.only(top: 12.0),
-                              child: Text(text, style: const TextStyle(color: _textMuted, fontSize: 10, fontFamily: 'Plus Jakarta Sans', fontWeight: FontWeight.w600)),
+                              child: Text(text, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 10, fontFamily: 'Plus Jakarta Sans', fontWeight: FontWeight.w600)),
                             );
                           },
                           reservedSize: 32,
@@ -426,7 +436,7 @@ class _ChartCard extends ConsumerWidget {
                       show: true,
                       drawVerticalLine: false,
                       horizontalInterval: data.fold<double>(0, (max, e) => e.revenue > max ? e.revenue : max) / 4 > 0 ? data.fold<double>(0, (max, e) => e.revenue > max ? e.revenue : max) / 4 : 1000,
-                      getDrawingHorizontalLine: (value) => FlLine(color: _borderThin, strokeWidth: 1, dashArray: [4, 4]),
+                      getDrawingHorizontalLine: (value) => FlLine(color: theme.colorScheme.outline.withOpacity(isDark ? 0.28 : 0.16), strokeWidth: 1, dashArray: [4, 4]),
                     ),
                     borderData: FlBorderData(show: false),
                     barGroups: data.asMap().entries.map((entry) {
@@ -464,15 +474,18 @@ class _TopProductsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final topProductsAsync = ref.watch(topProductsProvider);
     final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(isDark ? 0.28 : 0.08)),
+        boxShadow: [
           BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.03),
+            color: isDark ? const Color.fromRGBO(0, 0, 0, 0.16) : const Color.fromRGBO(0, 0, 0, 0.03),
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -481,13 +494,13 @@ class _TopProductsCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Produk Terlaris', 
             style: TextStyle(
               fontFamily: 'Plus Jakarta Sans',
               fontWeight: FontWeight.bold, 
               fontSize: 16, 
-              color: _textPrimary,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 20),
@@ -495,7 +508,7 @@ class _TopProductsCard extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator(color: _accent)),
             error: (e, _) => const Center(child: Text('Error', style: TextStyle(color: _trendRed))),
             data: (products) {
-              if (products.isEmpty) return const Text('Belum ada penjualan', style: TextStyle(color: _textMuted));
+              if (products.isEmpty) return Text('Belum ada penjualan', style: TextStyle(color: theme.colorScheme.onSurfaceVariant));
 
               return Column(
                 children: products.asMap().entries.map((entry) {
@@ -504,8 +517,8 @@ class _TopProductsCard extends ConsumerWidget {
                   final rank = idx + 1;
                   
                   final isTop1 = rank == 1;
-                  final rankBg = isTop1 ? const Color(0xFFC0EDD3) : _borderThin;
-                  final rankColor = isTop1 ? const Color(0xFF002114) : _textMuted;
+                  final rankBg = isTop1 ? const Color(0xFFC0EDD3) : theme.colorScheme.surfaceContainerHighest;
+                  final rankColor = isTop1 ? const Color(0xFF002114) : theme.colorScheme.onSurfaceVariant;
                   
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
@@ -537,20 +550,20 @@ class _TopProductsCard extends ConsumerWidget {
                             children: [
                               Text(
                                 prod.productName, 
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Plus Jakarta Sans',
                                   fontWeight: FontWeight.bold, 
                                   fontSize: 14, 
-                                  color: _textPrimary,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 '${prod.qtySold} terjual', 
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Plus Jakarta Sans',
                                   fontSize: 12, 
-                                  color: _textMuted,
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -562,7 +575,7 @@ class _TopProductsCard extends ConsumerWidget {
                             fontFamily: 'Space Mono', 
                             fontWeight: FontWeight.bold, 
                             fontSize: 14, 
-                            color: isTop1 ? _accent : _textPrimary,
+                            color: isTop1 ? _accent : theme.colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -584,15 +597,18 @@ class _PaymentMethodsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final paymentsAsync = ref.watch(paymentMethodBreakdownProvider);
-    
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(isDark ? 0.28 : 0.08)),
+        boxShadow: [
           BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.03),
+            color: isDark ? const Color.fromRGBO(0, 0, 0, 0.16) : const Color.fromRGBO(0, 0, 0, 0.03),
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -601,13 +617,13 @@ class _PaymentMethodsCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Metode Pembayaran', 
+          Text(
+            'Metode Pembayaran',
             style: TextStyle(
               fontFamily: 'Plus Jakarta Sans',
-              fontWeight: FontWeight.bold, 
-              fontSize: 16, 
-              color: _textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 20),
@@ -615,112 +631,180 @@ class _PaymentMethodsCard extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator(color: _accent)),
             error: (e, _) => const Center(child: Text('Error', style: TextStyle(color: _trendRed))),
             data: (methods) {
-              if (methods.isEmpty) return const Text('Belum ada transaksi', style: TextStyle(color: _textMuted));
+              if (methods.isEmpty) {
+                return Text('Belum ada transaksi', style: TextStyle(color: theme.colorScheme.onSurfaceVariant));
+              }
 
-              final total = methods.values.fold<double>(0, (sum, val) => sum + val);
+              final total = methods.fold<double>(0, (sum, item) => sum + item.revenue);
+              final totalTransactions = methods.fold<int>(0, (sum, item) => sum + item.transactionCount);
+              final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+              final entries = methods.toList()
+                ..sort((a, b) => _methodOrder(a.method).compareTo(_methodOrder(b.method)));
 
-              return Row(
+              return Column(
                 children: [
-                  SizedBox(
-                    width: 100,
-                    height: 100,
-                    child: Stack(
-                      children: [
-                        PieChart(
-                          PieChartData(
-                            sectionsSpace: 4,
-                            centerSpaceRadius: 36,
-                            sections: methods.entries.map((e) {
-                              Color c = _trendBlue;
-                              if (e.key == 'TUNAI') c = const Color(0xFFEDEEEF); // CASH
-                              else if (e.key == 'TRANSFER') c = const Color(0xFFC0EDD3); // QRIS/TRANSFER
-                              
-                              return PieChartSectionData(
-                                value: e.value,
-                                color: c,
-                                showTitle: false,
-                                radius: 12,
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'TOTAL', 
-                                style: TextStyle(
-                                  fontFamily: 'Plus Jakarta Sans', 
-                                  fontWeight: FontWeight.w600, 
-                                  fontSize: 10, 
-                                  color: _textMuted,
-                                ),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 104,
+                        height: 104,
+                        child: Stack(
+                          children: [
+                            PieChart(
+                              PieChartData(
+                                sectionsSpace: 4,
+                                centerSpaceRadius: 36,
+                                sections: entries.map((e) {
+                                  return PieChartSectionData(
+                                    value: e.revenue,
+                                    color: _methodColor(e.method),
+                                    showTitle: false,
+                                    radius: 12,
+                                  );
+                                }).toList(),
                               ),
-                              Text(
-                                NumberFormat.compact(locale: 'id_ID').format(total),
-                                style: const TextStyle(
-                                  fontFamily: 'Space Mono',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: _textPrimary,
-                                ),
+                            ),
+                            Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'TOTAL',
+                                    style: TextStyle(
+                                      fontFamily: 'Plus Jakarta Sans',
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 10,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  Text(
+                                    NumberFormat.compact(locale: 'id_ID').format(total),
+                                    style: TextStyle(
+                                      fontFamily: 'Space Mono',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Total Pembayaran Masuk',
+                              style: TextStyle(
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              currencyFormat.format(total),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Space Mono',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '$totalTransactions transaksi',
+                              style: TextStyle(
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 32),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: methods.entries.map((e) {
-                        final pct = (e.value / total) * 100;
-                        Color c = _trendBlue;
-                        if (e.key == 'TUNAI') c = const Color(0xFFEDEEEF);
-                        else if (e.key == 'TRANSFER') c = const Color(0xFFC0EDD3);
-                        
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 12, 
-                                height: 12, 
-                                decoration: BoxDecoration(
-                                  color: c, 
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
+                  const SizedBox(height: 20),
+                  Column(
+                    children: entries.map((e) {
+                      final pct = total == 0 ? 0 : (e.revenue / total) * 100;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: _methodColor(e.method),
+                                borderRadius: BorderRadius.circular(4),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  e.key, 
-                                  style: const TextStyle(
-                                    fontFamily: 'Plus Jakarta Sans', 
-                                    fontWeight: FontWeight.w600, 
-                                    fontSize: 12, 
-                                    color: _textSecondary,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _methodLabel(e.method),
+                                    style: TextStyle(
+                                      fontFamily: 'Plus Jakarta Sans',
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${e.method} - ${e.transactionCount} transaksi',
+                                    style: TextStyle(
+                                      fontFamily: 'Space Mono',
+                                      fontSize: 11,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  currencyFormat.format(e.revenue),
+                                  style: TextStyle(
+                                    fontFamily: 'Space Mono',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onSurface,
                                   ),
                                 ),
-                              ),
-                              Text(
-                                '${pct.toStringAsFixed(1)}%', 
-                                style: const TextStyle(
-                                  fontFamily: 'Space Mono', 
-                                  fontSize: 12, 
-                                  fontWeight: FontWeight.bold, 
-                                  color: _textPrimary,
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${pct.toStringAsFixed(1)}%',
+                                  style: TextStyle(
+                                    fontFamily: 'Space Mono',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  )
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ],
               );
             },
@@ -728,5 +812,47 @@ class _PaymentMethodsCard extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  String _methodLabel(String method) {
+    switch (method.toUpperCase()) {
+      case 'CASH':
+      case 'TUNAI':
+        return 'Tunai';
+      case 'QRIS':
+        return 'QRIS';
+      case 'TRANSFER':
+        return 'Transfer';
+      default:
+        return method;
+    }
+  }
+
+  Color _methodColor(String method) {
+    switch (method.toUpperCase()) {
+      case 'CASH':
+      case 'TUNAI':
+        return _trendAmber;
+      case 'QRIS':
+        return _accent;
+      case 'TRANSFER':
+        return _trendBlue;
+      default:
+        return _textMuted;
+    }
+  }
+
+  int _methodOrder(String method) {
+    switch (method.toUpperCase()) {
+      case 'CASH':
+      case 'TUNAI':
+        return 0;
+      case 'QRIS':
+        return 1;
+      case 'TRANSFER':
+        return 2;
+      default:
+        return 99;
+    }
   }
 }

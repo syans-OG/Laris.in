@@ -26,15 +26,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // States are now managed by ref.watch(providers)
 
 
-  void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fitur segera hadir'),
-        duration: Duration(seconds: 1),
-      ),
-    );
-  }
-
   Future<void> _pickLogo() async {
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -54,6 +45,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _removeLogo() async {
     await ref.read(settingsRepositoryProvider).setLogoPath(null);
     ref.read(logoPathProvider.notifier).state = null;
+  }
+
+  Future<void> _pickQrisImage() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      final appDir = await getApplicationDocumentsDirectory();
+      final extension = path.extension(image.path);
+      final fileName = 'qris_${DateTime.now().millisecondsSinceEpoch}$extension';
+      final savedImage = await File(image.path).copy('${appDir.path}/$fileName');
+
+      await ref.read(settingsRepositoryProvider).setQrisImagePath(savedImage.path);
+      ref.read(qrisImagePathProvider.notifier).state = savedImage.path;
+    }
+  }
+
+  Future<void> _removeQrisImage() async {
+    await ref.read(settingsRepositoryProvider).setQrisImagePath(null);
+    ref.read(qrisImagePathProvider.notifier).state = null;
   }
 
   Future<void> _showEditDialog({
@@ -106,6 +117,58 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ref.read(provider.notifier).state = result;
       }
     }
+  }
+
+  String _themeModeLabel(String mode) {
+    switch (mode) {
+      case 'dark':
+        return 'Gelap';
+      default:
+        return 'Terang';
+    }
+  }
+
+  Future<void> _showThemeDialog() async {
+    final current = ref.read(themeModeProvider) == 'dark' ? 'dark' : 'light';
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Pilih Tema',
+          style: TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<String>(
+              value: 'light',
+              groupValue: current,
+              activeColor: const Color(0xFF006948),
+              title: const Text('Terang', style: TextStyle(fontFamily: 'Plus Jakarta Sans')),
+              onChanged: (value) => Navigator.pop(context, value),
+            ),
+            RadioListTile<String>(
+              value: 'dark',
+              groupValue: current,
+              activeColor: const Color(0xFF006948),
+              title: const Text('Gelap', style: TextStyle(fontFamily: 'Plus Jakarta Sans')),
+              onChanged: (value) => Navigator.pop(context, value),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == null) return;
+    await ref.read(settingsRepositoryProvider).setThemeMode(result);
+    ref.read(themeModeProvider.notifier).state = result;
   }
 
   Future<bool> _verifyAdminPIN() async {
@@ -179,20 +242,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Pengaturan',
           style: TextStyle(
             fontFamily: 'Plus Jakarta Sans',
             fontWeight: FontWeight.bold,
-            color: Color(0xFF191C1D),
+            color: theme.colorScheme.onSurface,
           ),
         ),
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF191C1D)),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
       ),
       body: ListView(
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
@@ -448,6 +513,108 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ]),
 
+          _buildSectionHeader('PEMBAYARAN DIGITAL'),
+          _buildSectionCard([
+            Consumer(
+              builder: (context, ref, _) {
+                final enabled = ref.watch(qrisEnabledProvider);
+                return _buildSwitchTile(
+                  icon: Icons.qr_code_2,
+                  title: 'Aktifkan QRIS',
+                  subtitle: 'Kasir bisa menerima pembayaran scan QRIS',
+                  value: enabled,
+                  onChanged: (val) async {
+                    await ref.read(settingsRepositoryProvider).setQrisEnabled(val);
+                    ref.read(qrisEnabledProvider.notifier).state = val;
+                  },
+                );
+              },
+            ),
+            Consumer(
+              builder: (context, ref, _) {
+                final enabled = ref.watch(qrisEnabledProvider);
+                final qrisPath = ref.watch(qrisImagePathProvider);
+                if (!enabled) return const SizedBox.shrink();
+
+                return Column(
+                  children: [
+                    const Divider(height: 1, color: Color(0xFFEDEEEF)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      child: Row(
+                        children: [
+                          qrisPath != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    File(qrisPath),
+                                    width: 52,
+                                    height: 52,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Container(
+                                  width: 52,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8F9FA),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.qr_code_2, color: Color(0xFFBCCAC0)),
+                                ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Gambar QRIS Toko',
+                                  style: TextStyle(
+                                    fontFamily: 'Plus Jakarta Sans',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: Color(0xFF191C1D),
+                                  ),
+                                ),
+                                qrisPath != null
+                                    ? Text(
+                                        path.basename(qrisPath),
+                                        style: const TextStyle(
+                                          fontFamily: 'Space Mono',
+                                          fontSize: 12,
+                                          color: Color(0xFF6D7A72),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      )
+                                    : const Text(
+                                        'Belum ada QRIS',
+                                        style: TextStyle(
+                                          fontFamily: 'Plus Jakarta Sans',
+                                          fontSize: 12,
+                                          color: Color(0xFFBA1A1A),
+                                        ),
+                                      ),
+                              ],
+                            ),
+                          ),
+                          if (qrisPath != null)
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Color(0xFFBA1A1A)),
+                              onPressed: _removeQrisImage,
+                            ),
+                          IconButton(
+                            icon: const Icon(Icons.upload_file, color: Color(0xFF006948)),
+                            onPressed: _pickQrisImage,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ]),
+
           _buildSectionHeader('KASIR & AKUN'),
           _buildSectionCard([
             Consumer(builder: (context, ref, _) {
@@ -503,11 +670,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               },
             ),
             const Divider(height: 1, color: Color(0xFFEDEEEF)),
-            _buildListTile(
-              icon: Icons.palette,
-              title: 'Tema',
-              trailingText: 'Gelap',
-              onTap: () => _showComingSoon(context),
+            Consumer(
+              builder: (context, ref, _) {
+                final mode = ref.watch(themeModeProvider);
+                return _buildListTile(
+                  icon: Icons.palette,
+                  title: 'Tema',
+                  trailingText: _themeModeLabel(mode),
+                  onTap: _showThemeDialog,
+                );
+              },
             ),
           ]),
 
@@ -634,13 +806,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(32, 24, 24, 8),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Plus Jakarta Sans',
-          color: Color(0xFF6D7A72),
+          color: theme.colorScheme.onSurfaceVariant,
           fontSize: 12,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,
@@ -650,10 +824,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildSectionCard(List<Widget> children) {
+    final theme = Theme.of(context);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -662,7 +838,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             offset: Offset(0, 4),
           ),
         ],
-        border: Border.all(color: const Color(0xFFEDEEEF)),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.24)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -679,22 +855,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     VoidCallback? onTap,
     bool isNumeric = false,
   }) {
+    final theme = Theme.of(context);
+    final mutedColor = theme.colorScheme.onSurfaceVariant;
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: const Color(0xFFF8F9FA), borderRadius: BorderRadius.circular(8)),
-        child: Icon(icon, color: const Color(0xFF6D7A72)),
+        decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(8)),
+        child: Icon(icon, color: mutedColor),
       ),
-      title: Text(title, style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF191C1D))),
-      subtitle: subtitle != null ? Text(subtitle, style: TextStyle(fontFamily: isNumeric ? 'Space Mono' : 'Plus Jakarta Sans', fontSize: 12, color: const Color(0xFF6D7A72))) : null,
+      title: Text(title, style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface)),
+      subtitle: subtitle != null ? Text(subtitle, style: TextStyle(fontFamily: isNumeric ? 'Space Mono' : 'Plus Jakarta Sans', fontSize: 12, color: mutedColor)) : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (trailingText != null)
-            Text(trailingText, style: const TextStyle(fontFamily: 'Space Mono', color: Color(0xFF6D7A72), fontSize: 12)),
+            Text(trailingText, style: TextStyle(fontFamily: 'Space Mono', color: mutedColor, fontSize: 12)),
           if (trailingText != null) const SizedBox(width: 8),
-          if (onTap != null) const Icon(Icons.chevron_right, color: Color(0xFFBCCAC0)),
+          if (onTap != null) Icon(Icons.chevron_right, color: mutedColor.withOpacity(0.6)),
         ],
       ),
       onTap: onTap,
@@ -708,15 +887,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final theme = Theme.of(context);
+    final mutedColor = theme.colorScheme.onSurfaceVariant;
+
     return SwitchListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       secondary: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: const Color(0xFFF8F9FA), borderRadius: BorderRadius.circular(8)),
-        child: Icon(icon, color: const Color(0xFF6D7A72)),
+        decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(8)),
+        child: Icon(icon, color: mutedColor),
       ),
-      title: Text(title, style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF191C1D))),
-      subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 12, color: Color(0xFF6D7A72))) : null,
+      title: Text(title, style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface)),
+      subtitle: subtitle != null ? Text(subtitle, style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 12, color: mutedColor)) : null,
       value: value,
       activeThumbColor: Colors.white,
       activeTrackColor: const Color(0xFF006948),

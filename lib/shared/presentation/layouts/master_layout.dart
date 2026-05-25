@@ -39,6 +39,12 @@ class _MasterLayoutState extends ConsumerState<MasterLayout> {
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
     final isAdmin = session?.role == 'admin';
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = theme.colorScheme.surface;
+    final borderColor = theme.colorScheme.outline.withOpacity(isDark ? 0.35 : 0.18);
+    final selectedBgColor = AppColors.primary.withOpacity(isDark ? 0.18 : 0.12);
+    final unselectedColor = theme.colorScheme.onSurfaceVariant;
 
     // Admin: Kasir | Produk | Laporan | Pengaturan
     // Kasir: Kasir | Riwayat | Pengaturan
@@ -88,24 +94,24 @@ class _MasterLayoutState extends ConsumerState<MasterLayout> {
                       setState(() => _currentIndex = idx);
                     }
                   },
-                  backgroundColor: AppColors.surfaceLight,
-                  indicatorColor: const Color(0xFFECFDF5),
+                  backgroundColor: surfaceColor,
+                  indicatorColor: selectedBgColor,
                   selectedIconTheme:
-                      const IconThemeData(color: Color(0xFF059669)),
+                      const IconThemeData(color: AppColors.primary),
                   selectedLabelTextStyle:
-                      const TextStyle(color: Color(0xFF059669), fontWeight: FontWeight.w600),
+                      const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
                   unselectedIconTheme:
-                      const IconThemeData(color: Color(0xFF3D4A42)),
+                      IconThemeData(color: unselectedColor),
                   unselectedLabelTextStyle:
-                      const TextStyle(color: Color(0xFF3D4A42)),
+                      TextStyle(color: unselectedColor),
                   destinations: currentNavItems.map((item) => NavigationRailDestination(
                     icon: item.icon,
                     selectedIcon: item.selectedIcon,
                     label: Text(item.label),
                   )).toList(),
                 ),
-                const VerticalDivider(
-                    thickness: 1, width: 1, color: AppColors.borderLight),
+                VerticalDivider(
+                    thickness: 1, width: 1, color: borderColor),
                 Expanded(child: screens[safeIndex]),
               ],
             ),
@@ -115,10 +121,10 @@ class _MasterLayoutState extends ConsumerState<MasterLayout> {
         return Scaffold(
           body: screens[safeIndex],
           bottomNavigationBar: Container(
-            decoration: const BoxDecoration(
-              color: Color(0xCCFFFFFF),
-              border: Border(top: BorderSide(color: Color.fromRGBO(188, 202, 192, 0.1))),
-              boxShadow: [
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xDD181C27) : const Color(0xCCFFFFFF),
+              border: Border(top: BorderSide(color: borderColor)),
+              boxShadow: const [
                 BoxShadow(
                   color: Color.fromRGBO(0, 33, 20, 0.04),
                   blurRadius: 12,
@@ -148,7 +154,7 @@ class _MasterLayoutState extends ConsumerState<MasterLayout> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                             decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFFECFDF5) : Colors.transparent,
+                              color: isSelected ? selectedBgColor : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
@@ -156,7 +162,7 @@ class _MasterLayoutState extends ConsumerState<MasterLayout> {
                               children: [
                                 Icon(
                                   isSelected ? (item.selectedIcon as Icon).icon : (item.icon as Icon).icon, 
-                                  color: isSelected ? const Color(0xFF059669) : const Color(0xFF3D4A42), 
+                                  color: isSelected ? AppColors.primary : unselectedColor,
                                   size: 20
                                 ),
                                 const SizedBox(height: 4),
@@ -166,7 +172,7 @@ class _MasterLayoutState extends ConsumerState<MasterLayout> {
                                     fontFamily: 'Plus Jakarta Sans',
                                     fontWeight: FontWeight.w600,
                                     fontSize: 11,
-                                    color: isSelected ? const Color(0xFF059669) : const Color(0xFF3D4A42),
+                                    color: isSelected ? AppColors.primary : unselectedColor,
                                   ),
                                 ),
                               ],

@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_input.dart';
 import '../../domain/entities/product_entity.dart';
@@ -98,9 +102,68 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
   }
 
+  Future<void> _pickImageFromGallery() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+
+    if (image == null) return;
+
+    final appDir = await getApplicationDocumentsDirectory();
+    final productImageDir = Directory(path.join(appDir.path, 'product_images'));
+    if (!await productImageDir.exists()) {
+      await productImageDir.create(recursive: true);
+    }
+
+    final extension = path.extension(image.path).isEmpty ? '.jpg' : path.extension(image.path);
+    final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}$extension';
+    final savedImage = await File(image.path).copy(path.join(productImageDir.path, fileName));
+
+    setState(() {
+      _imageUrlController.text = savedImage.path;
+    });
+  }
+
+  void _removeImage() {
+    setState(() {
+      _imageUrlController.clear();
+    });
+  }
+
+  Widget _buildImagePreview(String imagePath) {
+    final isNetworkImage = imagePath.startsWith('http://') || imagePath.startsWith('https://');
+    final fallback = Center(
+      child: Icon(Icons.broken_image_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant),
+    );
+
+    if (!isNetworkImage && !File(imagePath).existsSync()) {
+      return fallback;
+    }
+
+    final image = isNetworkImage
+        ? Image.network(
+            imagePath,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => fallback,
+          )
+        : Image.file(
+            File(imagePath),
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => fallback,
+          );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: image,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final categoriesState = ref.watch(categoriesProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -204,10 +267,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ),
               const SizedBox(height: 16),
               
-              AppTextInput(
-                label: 'URL Gambar (Opsional)',
-                controller: _imageUrlController,
-              ),
+              _buildImagePickerSection(theme),
               const SizedBox(height: 16),
               
               SwitchListTile(
@@ -251,6 +311,79 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImagePickerSection(ThemeData theme) {
+    final imagePath = _imageUrlController.text.trim();
+    final hasImage = imagePath.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Gambar Produk',
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: hasImage
+                  ? _buildImagePreview(imagePath)
+                  : Center(
+                      child: Icon(
+                        Icons.image_outlined,
+                        size: 48,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickImageFromGallery,
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: Text(hasImage ? 'Ganti dari Galeri' : 'Pilih dari Galeri'),
+                ),
+              ),
+              if (hasImage) ...[
+                const SizedBox(width: 12),
+                IconButton(
+                  onPressed: _removeImage,
+                  icon: const Icon(Icons.delete_outline),
+                  color: AppColors.error,
+                  tooltip: 'Hapus gambar',
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          AppTextInput(
+            label: 'URL / Path Gambar (Opsional)',
+            controller: _imageUrlController,
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
       ),
     );
   }

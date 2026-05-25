@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/widgets/app_text_input.dart';
 import '../../../products/presentation/providers/category_provider.dart';
 import '../../../products/presentation/providers/product_provider.dart';
 import '../../../products/presentation/widgets/product_card.dart';
@@ -19,6 +18,12 @@ class PosGridPanel extends ConsumerWidget {
     final cartNotifier = ref.read(cartProvider.notifier);
     final searchQuery = ref.watch(productsQueryProvider);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = theme.colorScheme.surface;
+    final elevatedSurfaceColor = theme.colorScheme.surfaceContainerHighest;
+    final textColor = theme.colorScheme.onSurface;
+    final mutedColor = theme.colorScheme.onSurfaceVariant;
+    final borderColor = theme.colorScheme.outline.withOpacity(isDark ? 0.35 : 0.18);
 
     Future<void> handleBarcodeScanned(String barcode) async {
       if (barcode.isEmpty) return;
@@ -58,11 +63,12 @@ class PosGridPanel extends ConsumerWidget {
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: surfaceColor,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
+              border: Border.all(color: borderColor),
+              boxShadow: [
                 BoxShadow(
-                  color: Color.fromRGBO(0, 0, 0, 0.03),
+                  color: isDark ? const Color.fromRGBO(0, 0, 0, 0.14) : const Color.fromRGBO(0, 0, 0, 0.03),
                   blurRadius: 8,
                   offset: Offset(0, 4),
                 ),
@@ -70,23 +76,23 @@ class PosGridPanel extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.search, color: Color(0x996D7A72), size: 20),
+                Icon(Icons.search, color: mutedColor, size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: TextField(
                     onChanged: (val) {
                       ref.read(productsQueryProvider.notifier).state = val;
                     },
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
                       fontSize: 16,
-                      color: Color(0xFF191C1D),
+                      color: textColor,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Cari produk...',
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         fontFamily: 'Plus Jakarta Sans',
-                        color: Color(0x996D7A72),
+                        color: mutedColor.withOpacity(0.7),
                         fontSize: 16,
                       ),
                       border: InputBorder.none,
@@ -95,7 +101,7 @@ class PosGridPanel extends ConsumerWidget {
                       suffixIcon: IconButton(
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF6D7A72), size: 20),
+                        icon: Icon(Icons.qr_code_scanner, color: mutedColor, size: 20),
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -147,7 +153,7 @@ class PosGridPanel extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF006948) : const Color(0xFFF3F4F5),
+                        color: isSelected ? const Color(0xFF006948) : elevatedSurfaceColor,
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Center(
@@ -157,7 +163,7 @@ class PosGridPanel extends ConsumerWidget {
                             fontFamily: 'Plus Jakarta Sans',
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                             fontSize: 13,
-                            color: isSelected ? Colors.white : const Color(0xFF6D7A72),
+                            color: isSelected ? Colors.white : mutedColor,
                           ),
                         ),
                       ),
@@ -188,7 +194,7 @@ class PosGridPanel extends ConsumerWidget {
                 return Center(
                   child: Text(
                     'Tidak ada produk tersedia.',
-                    style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textMutedLight),
+                    style: theme.textTheme.bodyMedium?.copyWith(color: mutedColor),
                   ),
                 );
               }

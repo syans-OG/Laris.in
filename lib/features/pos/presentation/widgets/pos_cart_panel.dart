@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/app_card.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../providers/cart_provider.dart';
@@ -21,9 +19,16 @@ class PosCartPanel extends ConsumerWidget {
     final notifier = ref.read(cartProvider.notifier);
     final discountEnabled = ref.watch(discountEnabledProvider);
     final taxEnabled = ref.watch(taxEnabledProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = theme.colorScheme.surface;
+    final elevatedSurfaceColor = theme.colorScheme.surfaceContainerHighest;
+    final textColor = theme.colorScheme.onSurface;
+    final mutedColor = theme.colorScheme.onSurfaceVariant;
+    final borderColor = theme.colorScheme.outline.withOpacity(isDark ? 0.35 : 0.2);
 
     return Container(
-      color: Colors.white,
+      color: surfaceColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -33,13 +38,13 @@ class PosCartPanel extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Pesanan Saat Ini',
                   style: TextStyle(
                     fontFamily: 'Plus Jakarta Sans',
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: Color(0xFF191C1D),
+                    color: textColor,
                   ),
                 ),
                 if (cartState.items.isNotEmpty)
@@ -67,17 +72,17 @@ class PosCartPanel extends ConsumerWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color.fromRGBO(188, 202, 192, 0.2)),
+          Divider(height: 1, color: borderColor),
 
           // ── Item List ────────────────────────────────────────────
           Expanded(
             child: cartState.items.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'Keranjang Belanja Kosong',
                       style: TextStyle(
                         fontFamily: 'Inter',
-                        color: Color(0xFF3D4A42),
+                        color: mutedColor,
                       ),
                     ),
                   )
@@ -91,12 +96,12 @@ class PosCartPanel extends ConsumerWidget {
                       return Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: surfaceColor,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color.fromRGBO(188, 202, 192, 0.2)),
-                          boxShadow: const [
+                          border: Border.all(color: borderColor),
+                          boxShadow: [
                             BoxShadow(
-                              color: Color.fromRGBO(0, 33, 20, 0.02),
+                              color: isDark ? const Color.fromRGBO(0, 0, 0, 0.18) : const Color.fromRGBO(0, 33, 20, 0.02),
                               blurRadius: 8,
                               offset: Offset(0, 2),
                             )
@@ -112,11 +117,11 @@ class PosCartPanel extends ConsumerWidget {
                                     item.product.name,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'Plus Jakarta Sans',
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
-                                      color: Color(0xFF191C1D),
+                                      color: textColor,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
@@ -134,9 +139,9 @@ class PosCartPanel extends ConsumerWidget {
                             ),
                             Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF8F9FA),
+                                color: elevatedSurfaceColor,
                                 borderRadius: BorderRadius.circular(9999),
-                                border: Border.all(color: const Color.fromRGBO(188, 202, 192, 0.2)),
+                                border: Border.all(color: borderColor),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -144,20 +149,20 @@ class PosCartPanel extends ConsumerWidget {
                                   InkWell(
                                     onTap: () => notifier.decreaseQty(item.product),
                                     borderRadius: BorderRadius.circular(9999),
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Icon(Icons.remove, size: 18, color: Color(0xFF3D4A42)),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Icon(Icons.remove, size: 18, color: mutedColor),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12),
                                     child: Text(
                                       '${item.qty}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Plus Jakarta Sans',
                                         fontWeight: FontWeight.w700,
                                         fontSize: 14,
-                                        color: Color(0xFF191C1D),
+                                        color: textColor,
                                       ),
                                     ),
                                   ),
@@ -189,9 +194,9 @@ class PosCartPanel extends ConsumerWidget {
           // ── Summary Panel ────────────────────────────────────────
           Container(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8F9FA),
-              border: Border(top: BorderSide(color: Color.fromRGBO(188, 202, 192, 0.2))),
+            decoration: BoxDecoration(
+              color: elevatedSurfaceColor,
+              border: Border(top: BorderSide(color: borderColor)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -211,18 +216,18 @@ class PosCartPanel extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            const Text('Diskon',
+                            Text('Diskon',
                                 style: TextStyle(
                                   fontFamily: 'Inter',
-                                  color: Color(0xFF3D4A42),
+                                  color: mutedColor,
                                 )),
                             const SizedBox(width: 4),
                             if (cartState.discountType == DiscountType.percent)
                               Text(
                                 '${cartState.discount.toStringAsFixed(0)}%',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Space Mono',
-                                  color: Color(0xFF3D4A42),
+                                  color: mutedColor,
                                   fontSize: 12,
                                 ),
                               ),
@@ -241,8 +246,8 @@ class PosCartPanel extends ConsumerWidget {
                             const SizedBox(width: 8),
                             GestureDetector(
                               onTap: () => _openDiscount(context, ref),
-                              child: const Icon(Icons.edit,
-                                  size: 16, color: Color(0xFF3D4A42)),
+                              child: Icon(Icons.edit,
+                                  size: 16, color: mutedColor),
                             ),
                           ],
                         ),
@@ -284,19 +289,19 @@ class PosCartPanel extends ConsumerWidget {
                 ],
 
                 const SizedBox(height: 16),
-                const Divider(color: Color.fromRGBO(188, 202, 192, 0.2), height: 1),
+                Divider(color: borderColor, height: 1),
                 const SizedBox(height: 16),
 
                 // Grand Total
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total',
+                    Text('Total',
                         style: TextStyle(
                           fontFamily: 'Plus Jakarta Sans',
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: Color(0xFF191C1D),
+                          color: textColor,
                         )),
                     Text(
                       CurrencyFormatter.format(cartState.grandTotal),
@@ -396,19 +401,21 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
-              color: Color(0xFF3D4A42),
+              color: theme.colorScheme.onSurfaceVariant,
             )),
         Text(value,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Space Mono',
               fontWeight: FontWeight.bold,
-              color: Color(0xFF191C1D),
+              color: theme.colorScheme.onSurface,
             )),
       ],
     );

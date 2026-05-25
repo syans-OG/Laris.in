@@ -4,10 +4,7 @@ import '../../../auth/domain/entities/cashier_entity.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../history/presentation/screens/history_screen.dart';
 
-const _background = Color(0xFFF8F9FA);
 const _accent = Color(0xFF006948);
-const _textMuted = Color(0xFF6D7A72);
-const _textPrimary = Color(0xFF191C1D);
 
 class RiwayatAdminScreen extends ConsumerStatefulWidget {
   const RiwayatAdminScreen({super.key});
@@ -39,14 +36,15 @@ class _RiwayatAdminScreenState extends ConsumerState<RiwayatAdminScreen> {
   Widget build(BuildContext context) {
     // Ambil semua kasir aktif dari authRepositoryProvider
     final cashiersFuture = ref.watch(_allCashiersProvider);
+    final theme = Theme.of(context);
 
     return cashiersFuture.when(
       loading: () => const Center(child: CircularProgressIndicator(color: _accent)),
       error: (e, _) => Center(child: Text('Error: $e')),
       data: (cashiers) {
         if (cashiers.isEmpty) {
-          return const Center(
-            child: Text('Tidak ada kasir terdaftar', style: TextStyle(color: _textMuted)),
+          return Center(
+            child: Text('Tidak ada kasir terdaftar', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
           );
         }
 
@@ -62,7 +60,7 @@ class _RiwayatAdminScreenState extends ConsumerState<RiwayatAdminScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-              color: _background,
+              color: theme.scaffoldBackgroundColor,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 clipBehavior: Clip.none,
@@ -75,17 +73,17 @@ class _RiwayatAdminScreenState extends ConsumerState<RiwayatAdminScreen> {
                         margin: const EdgeInsets.only(right: 8),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isActive ? _accent.withOpacity(0.1) : Colors.transparent,
+                          color: isActive ? _accent.withOpacity(0.16) : Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isActive ? _accent.withOpacity(0.3) : const Color(0xFFD3D5D4),
+                            color: isActive ? _accent.withOpacity(0.35) : theme.colorScheme.outline.withOpacity(0.28),
                           ),
                         ),
                         child: Text(
                           tabLabels[index],
                           style: TextStyle(
                             fontFamily: 'Plus Jakarta Sans',
-                            color: isActive ? _accent : _textMuted,
+                            color: isActive ? _accent : theme.colorScheme.onSurfaceVariant,
                             fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                             fontSize: 14,
                           ),

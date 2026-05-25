@@ -21,20 +21,22 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Produk',
           style: TextStyle(
             fontFamily: 'Plus Jakarta Sans',
             fontWeight: FontWeight.bold,
-            color: Color(0xFF191C1D),
+            color: theme.colorScheme.onSurface,
           ),
         ),
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF191C1D)),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
       ),
       body: SafeArea(
         child: Stack(
@@ -73,13 +75,15 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
   }
 
   Widget _buildTabs() {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
         height: 44,
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: const Color(0xFFE9EBEA),
+          color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -94,7 +98,9 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
   }
 
   Widget _buildTabItem(int index, String label) {
+    final theme = Theme.of(context);
     final isActive = _activeTab == index;
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -104,7 +110,7 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
       behavior: HitTestBehavior.opaque,
       child: Container(
         decoration: BoxDecoration(
-          color: isActive ? Colors.white : Colors.transparent,
+          color: isActive ? theme.colorScheme.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           boxShadow: isActive
               ? const [
@@ -123,7 +129,7 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
               fontFamily: 'Plus Jakarta Sans',
               fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
               fontSize: 13,
-              color: isActive ? const Color(0xFF006948) : const Color(0xFF6D7A72),
+              color: isActive ? AppColors.primary : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -132,6 +138,10 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
   }
 
   Widget _buildSearchAndFilter() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = theme.colorScheme.outline.withOpacity(isDark ? 0.35 : 0.18);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Row(
@@ -141,11 +151,12 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
               height: 48,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
+                border: Border.all(color: borderColor),
+                boxShadow: [
                   BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.03),
+                    color: isDark ? const Color.fromRGBO(0, 0, 0, 0.14) : const Color.fromRGBO(0, 0, 0, 0.03),
                     blurRadius: 8,
                     offset: Offset(0, 4),
                   ),
@@ -153,24 +164,24 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search, color: Color(0x996D7A72), size: 20),
+                  Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       onChanged: (val) {
                         ref.read(productsQueryProvider.notifier).state = val;
                       },
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Plus Jakarta Sans',
                         fontSize: 16,
-                        color: Color(0xFF191C1D),
+                        color: theme.colorScheme.onSurface,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Cari nama barang atau SKU...',
                         hintStyle: TextStyle(
                           fontFamily: 'Plus Jakarta Sans',
                           fontSize: 16,
-                          color: Color(0x996D7A72),
+                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.75),
                         ),
                         border: InputBorder.none,
                       ),
@@ -185,18 +196,19 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
+              border: Border.all(color: borderColor),
+              boxShadow: [
                 BoxShadow(
-                  color: Color.fromRGBO(0, 0, 0, 0.03),
+                  color: isDark ? const Color.fromRGBO(0, 0, 0, 0.14) : const Color.fromRGBO(0, 0, 0, 0.03),
                   blurRadius: 8,
                   offset: Offset(0, 4),
                 ),
               ],
             ),
-            child: const Center(
-              child: Icon(Icons.tune, color: Color(0xFF3D4A42), size: 20),
+            child: Center(
+              child: Icon(Icons.tune, color: theme.colorScheme.onSurfaceVariant, size: 20),
             ),
           ),
         ],
@@ -249,12 +261,14 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
   }
 
   Widget _buildFilterChip({required String label, required bool isSelected, required VoidCallback onTap}) {
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF006948) : const Color(0xFFF3F4F5),
+          color: isSelected ? const Color(0xFF006948) : theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Center(
@@ -264,7 +278,7 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
               fontFamily: 'Plus Jakarta Sans',
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               fontSize: 13,
-              color: isSelected ? Colors.white : const Color(0xFF6D7A72),
+              color: isSelected ? Colors.white : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -273,26 +287,28 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
   }
 
   Widget _buildCustomFilterChip() {
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: () => _showCategoryManagement(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F5),
+          color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(999),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.edit_outlined, size: 14, color: Color(0xFF6D7A72)),
-            SizedBox(width: 6),
+            Icon(Icons.edit_outlined, size: 14, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 6),
             Text(
               'Custom',
               style: TextStyle(
                 fontFamily: 'Plus Jakarta Sans',
                 fontWeight: FontWeight.w500,
                 fontSize: 13,
-                color: Color(0xFF6D7A72),
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -302,6 +318,7 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
   }
 
   Widget _buildAllProducts() {
+    final theme = Theme.of(context);
     final productsState = ref.watch(productsProvider);
     return productsState.when(
       loading: () => const Padding(
@@ -314,10 +331,10 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
       ),
       data: (products) {
         if (products.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(32),
+          return Padding(
+            padding: const EdgeInsets.all(32),
             child: Center(
-              child: Text('Tidak ada produk.', style: TextStyle(color: AppColors.textMutedLight)),
+              child: Text('Tidak ada produk.', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
             ),
           );
         }
@@ -346,6 +363,7 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
   }
 
   Widget _buildLowStockProducts() {
+    final theme = Theme.of(context);
     final lowStockState = ref.watch(lowStockProductsProvider);
     return lowStockState.when(
       loading: () => const Padding(
@@ -358,15 +376,15 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
       ),
       data: (products) {
         if (products.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(32),
+          return Padding(
+            padding: const EdgeInsets.all(32),
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.check_circle_outline, size: 64, color: AppColors.primary),
                   SizedBox(height: 16),
-                  Text('Stok aman! Tidak ada yang menipis.', style: TextStyle(color: AppColors.textMutedLight)),
+                  Text('Stok aman! Tidak ada yang menipis.', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
                 ],
               ),
             ),
@@ -397,6 +415,9 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
   }
 
   Widget _buildStockHistory() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = theme.colorScheme.outline.withOpacity(isDark ? 0.35 : 0.18);
     final logsState = ref.watch(stockLogsProvider);
 
     return logsState.when(
@@ -410,21 +431,22 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
       ),
       data: (logs) {
         if (logs.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(32),
+          return Padding(
+            padding: const EdgeInsets.all(32),
             child: Center(
-              child: Text('Belum ada riwayat stok.', style: TextStyle(color: AppColors.textMutedLight)),
+              child: Text('Belum ada riwayat stok.', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
             ),
           );
         }
         return Container(
           margin: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: const [
+            border: Border.all(color: borderColor),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x0D000000),
+                color: isDark ? const Color.fromRGBO(0, 0, 0, 0.16) : const Color(0x0D000000),
                 blurRadius: 12,
                 offset: Offset(0, 4),
               ),
@@ -435,7 +457,7 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
             physics: const NeverScrollableScrollPhysics(),
             padding: EdgeInsets.zero,
             itemCount: logs.length,
-            separatorBuilder: (_, __) => const Divider(color: Color(0xFFEDEEEF), height: 1),
+            separatorBuilder: (_, __) => Divider(color: borderColor, height: 1),
             itemBuilder: (context, index) {
               final log = logs[index];
               final isPositive = log.qtyChange > 0;
@@ -462,31 +484,31 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
                         children: [
                           Text(
                             log.productName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Plus Jakarta Sans',
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: Color(0xFF191C1D),
+                              color: theme.colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${log.type.toUpperCase()} • ${log.createdAt.toString().split('.')[0]}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
-                              color: Color(0xFF6D7A72),
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                           if (log.note != null && log.note!.isNotEmpty) ...[
                             const SizedBox(height: 2),
                             Text(
                               log.note!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 12,
                                 fontStyle: FontStyle.italic,
-                                color: Color(0xFF6D7A72),
+                                color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -508,10 +530,10 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
                         const SizedBox(height: 4),
                         Text(
                           'Total: ${log.totalAfter}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 12,
-                            color: Color(0xFF6D7A72),
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/product_entity.dart';
@@ -17,17 +18,24 @@ class InventoryProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isLowStock = product.stock <= product.lowStockThreshold;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = theme.colorScheme.surface;
+    final elevatedSurfaceColor = theme.colorScheme.surfaceContainerHighest;
+    final textColor = theme.colorScheme.onSurface;
+    final mutedColor = theme.colorScheme.onSurfaceVariant;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
+          border: Border.all(color: theme.colorScheme.outline.withOpacity(isDark ? 0.28 : 0.08)),
+          boxShadow: [
             BoxShadow(
-              color: Color.fromRGBO(0, 33, 20, 0.03), // Softer shadow
+              color: isDark ? const Color.fromRGBO(0, 0, 0, 0.18) : const Color.fromRGBO(0, 33, 20, 0.03),
               blurRadius: 12,
               offset: Offset(0, 2),
             ),
@@ -44,16 +52,11 @@ class InventoryProductCard extends StatelessWidget {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F5),
+                    color: elevatedSurfaceColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                      ? Image.network(product.imageUrl!, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.inventory_2_outlined, color: AppColors.textMutedLight, size: 24)))
-                      : const Center(
-                          child: Icon(Icons.inventory_2_outlined, size: 24, color: AppColors.textMutedLight),
-                        ),
+                  child: _buildProductImage(product.imageUrl, mutedColor),
                 ),
                 const SizedBox(width: 12),
                 // Details
@@ -66,12 +69,12 @@ class InventoryProductCard extends StatelessWidget {
                         product.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Plus Jakarta Sans',
                           fontWeight: FontWeight.w600,
                           fontSize: 14, // Reduced from 16
                           height: 1.4,
-                          color: Color(0xFF191C1D),
+                          color: textColor,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -89,14 +92,14 @@ class InventoryProductCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Text(
+                          Text(
                             'PCS',
                             style: TextStyle(
                               fontFamily: 'Plus Jakarta Sans',
                               fontWeight: FontWeight.w600,
                               fontSize: 10, // Reduced from 12
                               letterSpacing: 0.5,
-                              color: Color(0xFF6D7A72),
+                              color: mutedColor,
                             ),
                           ),
                           if (isLowStock) ...[
@@ -133,8 +136,8 @@ class InventoryProductCard extends StatelessWidget {
                     decoration: const BoxDecoration(
                       color: Colors.transparent,
                     ),
-                    child: const Center(
-                      child: Icon(Icons.more_vert, color: Color(0xFF3D4A42), size: 20),
+                    child: Center(
+                      child: Icon(Icons.more_vert, color: mutedColor, size: 20),
                     ),
                   ),
                 ),
@@ -158,6 +161,40 @@ class InventoryProductCard extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProductImage(String? imageUrl, Color mutedColor) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Center(
+        child: Icon(Icons.inventory_2_outlined, size: 24, color: mutedColor),
+      );
+    }
+
+    final isNetworkImage = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+    if (isNetworkImage) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Center(
+          child: Icon(Icons.inventory_2_outlined, color: mutedColor, size: 24),
+        ),
+      );
+    }
+
+    final file = File(imageUrl);
+    if (!file.existsSync()) {
+      return Center(
+        child: Icon(Icons.inventory_2_outlined, size: 24, color: mutedColor),
+      );
+    }
+
+    return Image.file(
+      file,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Center(
+        child: Icon(Icons.inventory_2_outlined, color: mutedColor, size: 24),
       ),
     );
   }

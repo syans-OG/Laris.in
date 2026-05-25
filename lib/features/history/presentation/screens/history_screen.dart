@@ -39,6 +39,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final historyState = widget.cashierId != null
         ? ref.watch(historyByCashierProvider(widget.cashierId))
         : ref.watch(historyProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = theme.colorScheme.outline.withOpacity(isDark ? 0.28 : 0.12);
 
     Widget body = Column(
       children: [
@@ -51,11 +54,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 child: Container(
                   height: 48,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [
+                    border: Border.all(color: borderColor),
+                    boxShadow: [
                       BoxShadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.03),
+                        color: isDark ? const Color.fromRGBO(0, 0, 0, 0.16) : const Color.fromRGBO(0, 0, 0, 0.03),
                         blurRadius: 8,
                         offset: Offset(0, 4),
                       ),
@@ -64,20 +68,20 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   child: TextField(
                     controller: _searchController,
                     onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
                       fontSize: 14,
-                      color: Color(0xFF191C1D),
+                      color: theme.colorScheme.onSurface,
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Cari nomor invoice...',
                       hintStyle: TextStyle(
                         fontFamily: 'Plus Jakarta Sans',
-                        color: Color(0x996D7A72),
+                        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.75),
                       ),
-                      prefixIcon: Icon(Icons.search, color: Color(0xFF6D7A72), size: 20),
+                      prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant, size: 20),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                   ),
                 ),
@@ -87,18 +91,19 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 height: 48,
                 width: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
+                  border: Border.all(color: borderColor),
+                  boxShadow: [
                     BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.03),
+                      color: isDark ? const Color.fromRGBO(0, 0, 0, 0.16) : const Color.fromRGBO(0, 0, 0, 0.03),
                       blurRadius: 8,
                       offset: Offset(0, 4),
                     ),
                   ],
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.filter_list, color: Color(0xFF6D7A72)),
+                  icon: Icon(Icons.filter_list, color: theme.colorScheme.onSurfaceVariant),
                   onPressed: () {
                     // Filter action
                   },
@@ -114,21 +119,21 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Terbaru',
                 style: TextStyle(
                   fontFamily: 'Plus Jakarta Sans',
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Color(0xFF191C1D),
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               Text(
                 DateFormat('dd MMM yyyy').format(DateTime.now()).toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Space Mono',
                   fontSize: 12,
-                  color: Color(0xFF6D7A72),
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -159,19 +164,19 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                             Container(
                               width: 96,
                               height: 96,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFEDEEEF),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceContainerHighest,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.receipt_long, size: 40, color: Color(0xFF6D7A72)),
+                              child: Icon(Icons.receipt_long, size: 40, color: theme.colorScheme.onSurfaceVariant),
                             ),
                             const SizedBox(height: 16),
-                            const Text(
+                            Text(
                               'Menampilkan semua transaksi hari ini',
                               style: TextStyle(
                                 fontFamily: 'Plus Jakarta Sans',
                                 fontWeight: FontWeight.w500,
-                                color: Color(0xFF3D4A42),
+                                color: theme.colorScheme.onSurfaceVariant,
                                 fontSize: 14,
                               ),
                             ),
@@ -198,8 +203,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                         : trx.invoiceNo;
                     
                     final isCash = (trx.paymentMethod.toUpperCase() == 'TUNAI' || trx.paymentMethod.toUpperCase() == 'CASH');
-                    final badgeColor = isCash ? const Color(0xFFEDEEEF) : const Color(0xFFC0EDD3);
-                    final badgeTextColor = isCash ? const Color(0xFF3D4A42) : const Color(0xFF002114);
+                    final badgeColor = isCash ? theme.colorScheme.surfaceContainerHighest : const Color(0xFFC0EDD3);
+                    final badgeTextColor = isCash ? theme.colorScheme.onSurfaceVariant : const Color(0xFF002114);
 
                     return GestureDetector(
                       onTap: () {
@@ -213,13 +218,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           ),
                         );
                       },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
+                        child: Container(
+                          decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [
+                          border: Border.all(color: borderColor),
+                          boxShadow: [
                             BoxShadow(
-                              color: Color.fromRGBO(0, 0, 0, 0.05),
+                              color: isDark ? const Color.fromRGBO(0, 0, 0, 0.16) : const Color.fromRGBO(0, 0, 0, 0.05),
                               blurRadius: 1,
                               offset: Offset(0, 1),
                             ),
@@ -238,10 +244,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                     padding: const EdgeInsets.only(top: 2.0),
                                     child: Text(
                                       DateFormat('HH:mm').format(trx.createdAt),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Space Mono',
                                         fontSize: 12,
-                                        color: Color(0xFF6D7A72),
+                                        color: theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                   ),
@@ -259,11 +265,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                   Expanded(
                                     child: Text(
                                       invoiceDisplay,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Plus Jakarta Sans',
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
-                                        color: Color(0xFF191C1D),
+                                        color: theme.colorScheme.onSurface,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -318,22 +324,22 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       ],
     );
 
-    if (widget.hideAppBar) return Scaffold(backgroundColor: const Color(0xFFF8F9FA), body: body);
+    if (widget.hideAppBar) return Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: body);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Riwayat Transaksi',
           style: TextStyle(
             fontFamily: 'Plus Jakarta Sans',
             fontWeight: FontWeight.bold,
-            color: Color(0xFF191C1D),
+            color: theme.colorScheme.onSurface,
           ),
         ),
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF191C1D)),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

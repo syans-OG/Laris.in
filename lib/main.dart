@@ -30,17 +30,30 @@ Future<void> main() async {
   );
 }
 
-class LarisInApp extends StatelessWidget {
+class LarisInApp extends ConsumerWidget {
   const LarisInApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedThemeMode = ref.watch(themeModeProvider);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Laris.in',
-      theme: AppTheme.lightTheme, // V2 Luxury Minimal default
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: _themeModeFromSetting(selectedThemeMode),
       home: const AuthGate(),
     );
+  }
+
+  ThemeMode _themeModeFromSetting(String value) {
+    switch (value) {
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.light;
+    }
   }
 }
 

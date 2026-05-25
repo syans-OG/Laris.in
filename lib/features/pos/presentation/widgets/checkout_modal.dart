@@ -1,9 +1,8 @@
-import 'dart:ui';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/app_text_input.dart';
+import '../../../settings/data/settings_repository.dart';
 import '../providers/cart_provider.dart';
 import '../../domain/usecases/confirm_payment_usecase.dart';
 import '../screens/digital_receipt_screen.dart';
@@ -20,7 +19,7 @@ class _CheckoutModalState extends ConsumerState<CheckoutModal> {
   final TextEditingController _cashController = TextEditingController();
   double _cashReceived = 0.0;
   bool _isLoading = false;
-  final String _paymentMethod = 'CASH'; // Default untuk MVP (Tunai)
+  String _paymentMethod = 'CASH';
 
   @override
   void dispose() {
@@ -29,12 +28,14 @@ class _CheckoutModalState extends ConsumerState<CheckoutModal> {
   }
 
   Future<void> _processPayment(double grandTotal) async {
-    if (_cashReceived < grandTotal) return;
+    final isQris = _paymentMethod == 'QRIS';
+    if (!isQris && _cashReceived < grandTotal) return;
     if (_isLoading) return; // Cegah double tap
 
     setState(() => _isLoading = true);
     try {
       final cartState = ref.read(cartProvider);
+      final paidAmount = isQris ? grandTotal : _cashReceived;
       
       // SATU-SATUNYA tugas fungsi ini: simpan transaksi murni
       final transaction = await ref
@@ -42,7 +43,7 @@ class _CheckoutModalState extends ConsumerState<CheckoutModal> {
           .execute(
             cart: cartState,
             paymentMethod: _paymentMethod, 
-            paidAmount: _cashReceived,
+            paidAmount: paidAmount,
           );
 
       // Reset cart setelah berhasil simpan
@@ -78,12 +79,157 @@ class _CheckoutModalState extends ConsumerState<CheckoutModal> {
     }
   }
 
+  Widget _buildPaymentMethodSelector(bool canUseQris, bool qrisEnabled) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Metode Pembayaran',
+          style: TextStyle(
+            fontFamily: 'Plus Jakarta Sans',
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: Color(0xFF3D4A42),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildPaymentMethodOption(
+                method: 'CASH',
+                label: 'Tunai',
+                icon: Icons.payments,
+                enabled: true,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildPaymentMethodOption(
+                method: 'QRIS',
+                label: 'QRIS',
+                icon: Icons.qr_code_2,
+                enabled: canUseQris,
+                disabledMessage: qrisEnabled ? 'Upload gambar QRIS dulu' : 'Aktifkan QRIS di pengaturan',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentMethodOption({
+    required String method,
+    required String label,
+    required IconData icon,
+    required bool enabled,
+    String? disabledMessage,
+  }) {
+    final selected = _paymentMethod == method;
+    final borderColor = selected ? AppColors.primary : const Color.fromRGBO(188, 202, 192, 0.4);
+    final backgroundColor = selected ? const Color(0xFFEAF7F1) : Colors.white;
+    final foregroundColor = enabled
+        ? selected ? AppColors.primary : const Color(0xFF3D4A42)
+        : const Color(0xFFBCCAC0);
+
+    return Material(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: enabled
+            ? () => setState(() => _paymentMethod = method)
+            : () {
+                if (disabledMessage == null) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(disabledMessage)),
+                );
+              },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor, width: selected ? 1.8 : 1.2),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: foregroundColor, size: 20),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: foregroundColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQrisPanel(String? qrisImagePath, bool canUseQris) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color.fromRGBO(188, 202, 192, 0.35)),
+      ),
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: canUseQris && qrisImagePath != null
+                ? Image.file(
+                    File(qrisImagePath),
+                    height: 220,
+                    width: double.infinity,
+                    fit: BoxFit.contain,
+                  )
+                : Container(
+                    height: 180,
+                    width: double.infinity,
+                    color: Colors.white,
+                    child: const Icon(Icons.qr_code_2, size: 72, color: Color(0xFFBCCAC0)),
+                  ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Pastikan pembayaran sudah masuk sebelum konfirmasi.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Color(0xFF3D4A42),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartState = ref.watch(cartProvider);
+    final qrisEnabled = ref.watch(qrisEnabledProvider);
+    final qrisImagePath = ref.watch(qrisImagePathProvider);
+    final hasQrisImage = qrisImagePath != null && qrisImagePath.isNotEmpty && File(qrisImagePath).existsSync();
+    final canUseQris = qrisEnabled && hasQrisImage;
     final grandTotal = cartState.grandTotal;
-    final change = _cashReceived - grandTotal;
-    final isSufficient = _cashReceived >= grandTotal;
+    final isQris = _paymentMethod == 'QRIS';
+    final change = isQris ? 0.0 : _cashReceived - grandTotal;
+    final isSufficient = isQris ? canUseQris : _cashReceived >= grandTotal;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -167,75 +313,82 @@ class _CheckoutModalState extends ConsumerState<CheckoutModal> {
               ),
               const SizedBox(height: 24),
 
-              // Cash Input
-              const Text(
-                'Tunai Diterima',
-                style: TextStyle(
-                  fontFamily: 'Plus Jakarta Sans',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: Color(0xFF3D4A42),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color.fromRGBO(188, 202, 192, 0.4), width: 1.5),
-                ),
-                child: Row(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 20, right: 12),
-                      child: Text(
-                        'Rp',
-                        style: TextStyle(
-                          fontFamily: 'Space Mono',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Color(0xFF3D4A42),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: TextField(
-                        controller: _cashController,
-                        keyboardType: TextInputType.number,
-                        style: const TextStyle(
-                          fontFamily: 'Space Mono',
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF191C1D),
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          hintText: '0',
-                          hintStyle: TextStyle(
-                            color: Color(0xFFBCCAC0),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        onChanged: (val) {
-                          setState(() {
-                            _cashReceived = double.tryParse(val) ?? 0.0;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildPaymentMethodSelector(canUseQris, qrisEnabled),
               const SizedBox(height: 24),
 
-              // Change Info
+              if (isQris) ...[
+                _buildQrisPanel(qrisImagePath, canUseQris),
+              ] else ...[
+                // Cash Input
+                const Text(
+                  'Tunai Diterima',
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Color(0xFF3D4A42),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color.fromRGBO(188, 202, 192, 0.4), width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 20, right: 12),
+                        child: Text(
+                          'Rp',
+                          style: TextStyle(
+                            fontFamily: 'Space Mono',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Color(0xFF3D4A42),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: _cashController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(
+                            fontFamily: 'Space Mono',
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF191C1D),
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            hintText: '0',
+                            hintStyle: TextStyle(
+                              color: Color(0xFFBCCAC0),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          onChanged: (val) {
+                            setState(() {
+                              _cashReceived = double.tryParse(val) ?? 0.0;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+
+              // Payment Info
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Kembalian', 
+                  Text(
+                    isQris ? 'Nominal QRIS' : 'Kembalian',
                     style: TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
                       fontWeight: FontWeight.w600,
@@ -245,13 +398,15 @@ class _CheckoutModalState extends ConsumerState<CheckoutModal> {
                   ),
                   Flexible(
                     child: Text(
-                      change < 0 ? 'Kurang Bayar' : CurrencyFormatter.format(change),
+                      isQris
+                          ? CurrencyFormatter.format(grandTotal)
+                          : change < 0 ? 'Kurang Bayar' : CurrencyFormatter.format(change),
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: 'Space Mono',
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: change < 0 ? const Color(0xFFBA1A1A) : const Color(0xFF191C1D),
+                        color: !isQris && change < 0 ? const Color(0xFFBA1A1A) : const Color(0xFF191C1D),
                       ),
                     ),
                   ),
@@ -318,7 +473,7 @@ class _CheckoutModalState extends ConsumerState<CheckoutModal> {
                                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                   )
                                 : Text(
-                                    'Proses Transaksi',
+                                    isQris ? 'Konfirmasi Dibayar' : 'Proses Transaksi',
                                     style: TextStyle(
                                       fontFamily: 'Plus Jakarta Sans',
                                       fontWeight: FontWeight.bold,

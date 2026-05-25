@@ -37,3 +37,15 @@ class TopProduct {
     required this.revenue,
   });
 }
+
+class PaymentMethodBreakdown {
+  final String method;
+  final double revenue;
+  final int transactionCount;
+
+  const PaymentMethodBreakdown({
+    required this.method,
+    required this.revenue,
+    required this.transactionCount,
+  });
+}

@@ -44,10 +44,12 @@ class _LiveClockState extends State<LiveClock> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Text(
       _timeString,
       style: widget.style ?? AppTypography.displaySmall.copyWith(
-        color: AppColors.textPrimaryLight,
+        color: theme.colorScheme.onSurface,
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),

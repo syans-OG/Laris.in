@@ -17,7 +17,7 @@ abstract class ReportRepository {
     int limit = 5,
   });
 
-  Future<Map<String, double>> getPaymentMethodBreakdown({
+  Future<List<PaymentMethodBreakdown>> getPaymentMethodBreakdown({
     required DateTime startDate,
     required DateTime endDate,
   });

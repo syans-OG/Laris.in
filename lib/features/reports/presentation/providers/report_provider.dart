@@ -74,7 +74,7 @@ final topProductsProvider = FutureProvider<List<TopProduct>>((ref) {
   return repository.getTopProducts(startDate: range.start, endDate: range.end);
 });
 
-final paymentMethodBreakdownProvider = FutureProvider<Map<String, double>>((ref) {
+final paymentMethodBreakdownProvider = FutureProvider<List<PaymentMethodBreakdown>>((ref) {
   final repository = ref.watch(reportRepositoryProvider);
   final range = ref.watch(reportDateRangeProvider);
   return repository.getPaymentMethodBreakdown(startDate: range.start, endDate: range.end);

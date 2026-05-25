@@ -13,17 +13,21 @@ class PosScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = theme.colorScheme.surface;
+    final mutedColor = theme.colorScheme.onSurfaceVariant;
+    final borderColor = theme.colorScheme.outline.withOpacity(isDark ? 0.35 : 0.22);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFF8F9FA),
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
             boxShadow: [
               BoxShadow(
-                color: Color.fromRGBO(0, 33, 20, 0.04),
+                color: isDark ? const Color.fromRGBO(0, 0, 0, 0.18) : const Color.fromRGBO(0, 33, 20, 0.04),
                 blurRadius: 12,
                 offset: Offset(0, 4),
               )
@@ -34,8 +38,8 @@ class PosScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     'Laris.in',
                     style: TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
@@ -45,11 +49,11 @@ class PosScreen extends StatelessWidget {
                       letterSpacing: -0.5,
                     ),
                   ),
-                  LiveClock(),
+                  const LiveClock(),
                   CircleAvatar(
                     radius: 16.5,
-                    backgroundColor: Color(0xFFEDEEEF),
-                    child: Icon(Icons.person, size: 20, color: AppColors.textMutedLight),
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                    child: Icon(Icons.person, size: 20, color: mutedColor),
                   ),
                 ],
               ),
@@ -66,10 +70,10 @@ class PosScreen extends StatelessWidget {
                   flex: 3,
                   child: PosGridPanel(),
                 ),
-                const VerticalDivider(width: 1, thickness: 1, color: AppColors.borderLight),
-                Expanded(
+                VerticalDivider(width: 1, thickness: 1, color: borderColor),
+                const Expanded(
                   flex: 2,
-                  child: const PosCartPanel(),
+                  child: PosCartPanel(),
                 ),
               ],
             );
@@ -102,11 +106,11 @@ class PosScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyCartBar() {
-    return const SizedBox.shrink(); // Hide the bar completely when empty, per modern minimal design
-  }
-
   Widget _buildCartBar(BuildContext context, dynamic cartState, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = theme.colorScheme.surface;
+    final borderColor = theme.colorScheme.outline.withOpacity(isDark ? 0.35 : 0.22);
+
     return GestureDetector(
       onTap: () {
         showModalBottomSheet(
@@ -135,9 +139,9 @@ class PosScreen extends StatelessWidget {
                   builder: (_, scrollController) => GestureDetector(
                     onTap: () {},
                     child: Container(
-                      decoration: const BoxDecoration(
-                        color: AppColors.surfaceLight,
-                        borderRadius: BorderRadius.only(
+                      decoration: BoxDecoration(
+                        color: surfaceColor,
+                        borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(24),
                           topRight: Radius.circular(24),
                         ),
@@ -149,7 +153,7 @@ class PosScreen extends StatelessWidget {
                               margin: const EdgeInsets.only(top: 12, bottom: 8),
                               width: 48, height: 4,
                               decoration: BoxDecoration(
-                                color: AppColors.borderLight,
+                                color: borderColor,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -170,9 +174,9 @@ class PosScreen extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
+          color: surfaceColor.withOpacity(isDark ? 0.92 : 0.9),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color.fromRGBO(188, 202, 192, 0.05)),
+          border: Border.all(color: borderColor),
           boxShadow: const [
             BoxShadow(
               color: Color.fromRGBO(0, 33, 20, 0.08),
@@ -197,7 +201,7 @@ class PosScreen extends StatelessWidget {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F5),
+                          color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(Icons.shopping_basket_outlined, color: Color(0xFF006948)),
@@ -242,18 +246,18 @@ class PosScreen extends StatelessWidget {
                       children: [
                         Text(
                           'Total (${cartState.totalQty} items)',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
-                            color: Color(0xFF3D4A42),
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           CurrencyFormatter.format(cartState.grandTotal),
                           style: AppTypography.displaySmall.copyWith(
-                            color: const Color(0xFF191C1D),
+                            color: theme.colorScheme.onSurface,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),

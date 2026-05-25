@@ -130,7 +130,7 @@ class ReportRepositoryImpl implements ReportRepository {
   }
 
   @override
-  Future<Map<String, double>> getPaymentMethodBreakdown({
+  Future<List<PaymentMethodBreakdown>> getPaymentMethodBreakdown({
     required DateTime startDate,
     required DateTime endDate,
   }) async {
@@ -139,19 +139,27 @@ class ReportRepositoryImpl implements ReportRepository {
     
     final db = await _db.database;
     final result = db.select('''
-      SELECT payment_method, SUM(total) as revenue
+      SELECT payment_method, SUM(total) as revenue, COUNT(id) as transaction_count
       FROM transactions
       WHERE created_at >= ? AND created_at <= ?
       GROUP BY payment_method
     ''', [startStr, endStr]);
 
-    final Map<String, double> breakdown = {};
+    final Map<String, PaymentMethodBreakdown> breakdown = {};
     for (var row in result) {
-      final method = (row['payment_method'] as String).toUpperCase();
+      final rawMethod = (row['payment_method'] as String).toUpperCase();
+      final method = rawMethod == 'TUNAI' ? 'CASH' : rawMethod;
       final revenue = (row['revenue'] as num).toDouble();
-      breakdown[method] = revenue;
+      final transactionCount = (row['transaction_count'] as num).toInt();
+      final current = breakdown[method];
+
+      breakdown[method] = PaymentMethodBreakdown(
+        method: method,
+        revenue: (current?.revenue ?? 0) + revenue,
+        transactionCount: (current?.transactionCount ?? 0) + transactionCount,
+      );
     }
     
-    return breakdown;
+    return breakdown.values.toList();
   }
 }
