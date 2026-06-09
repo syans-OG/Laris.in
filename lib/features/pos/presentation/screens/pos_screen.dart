@@ -7,6 +7,7 @@ import '../providers/cart_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/presentation/widgets/live_clock.dart';
 import 'dart:ui';
+import 'tutorial_page.dart';
 class PosScreen extends StatelessWidget {
   const PosScreen({super.key});
 
@@ -50,10 +51,24 @@ class PosScreen extends StatelessWidget {
                     ),
                   ),
                   const LiveClock(),
-                  CircleAvatar(
-                    radius: 16.5,
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    child: Icon(Icons.person, size: 20, color: mutedColor),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TutorialPage(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 33,
+                      height: 33,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.help_outline, size: 20, color: mutedColor),
+                    ),
                   ),
                 ],
               ),
