@@ -1,4 +1,5 @@
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
+import 'package:intl/intl.dart';
 import '../../../../features/transactions/domain/entities/transaction_entity.dart';
 import '../../../../features/settings/data/settings_repository.dart';
 
@@ -137,6 +138,70 @@ class ReceiptGenerator {
     bytes += generator.cut();
 
     return bytes;
+  }
+
+  /// Generates a plain text format of the receipt for sharing via WhatsApp or other text-based apps
+  static String generateTextReceipt(
+    TransactionEntity transaction,
+    SettingsRepository settings,
+  ) {
+    final buffer = StringBuffer();
+
+    // Store Identity Header
+    if (settings.showStoreName) {
+      buffer.writeln('*${settings.storeName.toUpperCase()}*');
+    }
+    if (settings.showAddress) {
+      buffer.writeln(settings.storeAddress);
+      buffer.writeln('Telp: ${settings.storePhone}');
+    }
+    buffer.writeln();
+
+    // Transaction Info
+    buffer.writeln('No: TRX-${transaction.id.toString().padLeft(6, '0')}');
+    buffer.writeln('Tgl: ${_formatDate(transaction.createdAt)} | Kasir: Admin (ID:${transaction.cashierId})');
+    buffer.writeln('-' * 28);
+
+    // Items List
+    final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
+    for (final item in transaction.items ?? []) {
+      final name = item.product?.name ?? "Item ${item.id}";
+      final qtyAndPrice = '${item.qty}x';
+      final subtotalStr = currencyFormat.format(item.subtotal);
+      
+      buffer.write(name.padRight(14));
+      buffer.write(' ');
+      buffer.write(qtyAndPrice.padRight(4));
+      buffer.write(' ');
+      buffer.writeln(subtotalStr.padLeft(8));
+    }
+    
+    buffer.writeln('-' * 28);
+
+    // Breakdown
+    final subtotalStr = currencyFormat.format((transaction.items ?? []).fold(0.0, (sum, item) => sum + item.subtotal));
+    buffer.writeln('Subtotal'.padRight(16) + subtotalStr.padLeft(12));
+
+    if (transaction.discount > 0) {
+      final discountStr = '-${currencyFormat.format(transaction.discount)}';
+      buffer.writeln('Diskon'.padRight(16) + discountStr.padLeft(12));
+    }
+
+    final grandTotal = transaction.total - transaction.discount + transaction.tax;
+    final totalStr = currencyFormat.format(grandTotal);
+    buffer.writeln('*TOTAL'.padRight(16) + totalStr.padLeft(11) + '*');
+
+    final paidStr = currencyFormat.format(transaction.paidAmount);
+    buffer.writeln('Tunai'.padRight(16) + paidStr.padLeft(12));
+
+    final changeStr = currencyFormat.format(transaction.changeAmount);
+    buffer.writeln('Kembali'.padRight(16) + changeStr.padLeft(12));
+
+    buffer.writeln('-' * 28);
+    buffer.writeln('${settings.storeFooter} 🙏');
+
+    return buffer.toString();
   }
 
   static String _formatDate(DateTime dt) {

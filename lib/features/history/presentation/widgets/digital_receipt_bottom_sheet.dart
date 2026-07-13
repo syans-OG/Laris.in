@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:screenshot/screenshot.dart';
+import '../../../../core/services/receipt_save_service.dart';
+import '../../../../core/services/printer/receipt_generator.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../pos/domain/usecases/print_receipt_usecase.dart';
 import '../../../settings/data/settings_repository.dart';
@@ -9,8 +13,9 @@ import '../providers/history_provider.dart';
 
 class DigitalReceiptBottomSheet extends ConsumerWidget {
   final TransactionEntity transaction;
+  final ScreenshotController _screenshotController = ScreenshotController();
 
-  const DigitalReceiptBottomSheet({
+  DigitalReceiptBottomSheet({
     super.key,
     required this.transaction,
   });
@@ -51,16 +56,33 @@ class DigitalReceiptBottomSheet extends ConsumerWidget {
     }
   }
 
-  void _handleShare(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fitur bagikan belum tersedia')),
-    );
+  void _handleShare(BuildContext context, WidgetRef ref) {
+    final settings = ref.read(settingsRepositoryProvider);
+    final receiptText = ReceiptGenerator.generateTextReceipt(transaction, settings);
+    Share.share(receiptText, subject: 'Struk Laris.in');
   }
 
-  void _handleSave(BuildContext context) {
+  Future<void> _handleSave(BuildContext context) async {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fitur simpan PDF belum tersedia')),
+      const SnackBar(content: Text('Menyiapkan gambar struk...')),
     );
+
+    final success = await ReceiptSaveService.captureAndSave(
+      controller: _screenshotController,
+      invoiceNo: transaction.invoiceNo,
+    );
+
+    if (!context.mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Struk berhasil dibagikan/disimpan!')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal menyimpan struk.')),
+      );
+    }
   }
 
   @override
@@ -109,15 +131,17 @@ class DigitalReceiptBottomSheet extends ConsumerWidget {
           ),
           
           // Receipt Container
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFBCCAC0).withValues(alpha: 0.3),
+          Screenshot(
+            controller: _screenshotController,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFBCCAC0).withValues(alpha: 0.3),
+                ),
               ),
-            ),
-            padding: const EdgeInsets.fromLTRB(25, 33, 25, 25),
+              padding: const EdgeInsets.fromLTRB(25, 33, 25, 25),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -330,6 +354,7 @@ class DigitalReceiptBottomSheet extends ConsumerWidget {
               ],
             ),
           ),
+          ),
           const SizedBox(height: 16),
           
           // Actions Row
@@ -347,7 +372,7 @@ class DigitalReceiptBottomSheet extends ConsumerWidget {
                 child: _ActionButton(
                   icon: Icons.share_outlined,
                   label: 'BAGIKAN',
-                  onTap: () => _handleShare(context),
+                  onTap: () => _handleShare(context, ref),
                 ),
               ),
               const SizedBox(width: 12),

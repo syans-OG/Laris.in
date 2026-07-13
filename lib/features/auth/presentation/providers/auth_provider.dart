@@ -108,6 +108,13 @@ class LoginViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> logout() async {
+    isSuccess = false;
+    selectedCashier = null;
+    currentPin = '';
+    await _loadCashiers();
+  }
 }
 
 // ── Cashier Management ───────────────────────────────────────────────────────

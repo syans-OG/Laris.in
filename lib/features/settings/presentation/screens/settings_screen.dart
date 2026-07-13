@@ -220,11 +220,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _handleLogout() async {
     await ref.read(authRepositoryProvider).logout();
     ref.read(sessionProvider.notifier).state = null;
+    await ref.read(loginViewModelProvider).logout();
     if (mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
+      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 
@@ -243,6 +241,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currentUser = ref.watch(sessionProvider);
+    final isAdmin = currentUser?.role == 'admin';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -263,55 +263,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: const EdgeInsets.only(bottom: 40),
         children: [
-          _buildSectionHeader('INFORMASI TOKO'),
-          _buildSectionCard([
-            Consumer(builder: (context, ref, _) {
-              final name = ref.watch(storeNameProvider);
-              return _buildListTile(
-                icon: Icons.store,
-                title: 'Nama Toko',
-                subtitle: name,
-                onTap: () => _showEditDialog(
+          if (isAdmin) ...[
+            _buildSectionHeader('INFORMASI TOKO'),
+            _buildSectionCard([
+              Consumer(builder: (context, ref, _) {
+                final name = ref.watch(storeNameProvider);
+                return _buildListTile(
+                  icon: Icons.store,
                   title: 'Nama Toko',
-                  initialValue: name,
-                  provider: storeNameProvider,
-                  onSave: (val) => ref.read(settingsRepositoryProvider).setStoreName(val),
-                ),
-              );
-            }),
-            const Divider(height: 1, color: Color(0xFFEDEEEF)),
-            Consumer(builder: (context, ref, _) {
-              final address = ref.watch(storeAddressProvider);
-              return _buildListTile(
-                icon: Icons.location_on,
-                title: 'Alamat',
-                subtitle: address,
-                onTap: () => _showEditDialog(
+                  subtitle: name,
+                  onTap: () => _showEditDialog(
+                    title: 'Nama Toko',
+                    initialValue: name,
+                    provider: storeNameProvider,
+                    onSave: (val) => ref.read(settingsRepositoryProvider).setStoreName(val),
+                  ),
+                );
+              }),
+              const Divider(height: 1, color: Color(0xFFEDEEEF)),
+              Consumer(builder: (context, ref, _) {
+                final address = ref.watch(storeAddressProvider);
+                return _buildListTile(
+                  icon: Icons.location_on,
                   title: 'Alamat',
-                  initialValue: address,
-                  provider: storeAddressProvider,
-                  onSave: (val) => ref.read(settingsRepositoryProvider).setStoreAddress(val),
-                ),
-              );
-            }),
-            const Divider(height: 1, color: Color(0xFFEDEEEF)),
-            Consumer(builder: (context, ref, _) {
-              final phone = ref.watch(storePhoneProvider);
-              return _buildListTile(
-                icon: Icons.phone,
-                title: 'Nomor HP',
-                subtitle: phone,
-                isNumeric: true,
-                onTap: () => _showEditDialog(
+                  subtitle: address,
+                  onTap: () => _showEditDialog(
+                    title: 'Alamat',
+                    initialValue: address,
+                    provider: storeAddressProvider,
+                    onSave: (val) => ref.read(settingsRepositoryProvider).setStoreAddress(val),
+                  ),
+                );
+              }),
+              const Divider(height: 1, color: Color(0xFFEDEEEF)),
+              Consumer(builder: (context, ref, _) {
+                final phone = ref.watch(storePhoneProvider);
+                return _buildListTile(
+                  icon: Icons.phone,
                   title: 'Nomor HP',
-                  initialValue: phone,
-                  provider: storePhoneProvider,
-                  onSave: (val) => ref.read(settingsRepositoryProvider).setStorePhone(val),
+                  subtitle: phone,
                   isNumeric: true,
-                ),
-              );
-            }),
-          ]),
+                  onTap: () => _showEditDialog(
+                    title: 'Nomor HP',
+                    initialValue: phone,
+                    provider: storePhoneProvider,
+                    onSave: (val) => ref.read(settingsRepositoryProvider).setStorePhone(val),
+                    isNumeric: true,
+                  ),
+                );
+              }),
+            ]),
+          ],
 
           _buildSectionHeader('PRINTER STRUK'),
           _buildSectionCard([
@@ -370,97 +372,100 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ]),
 
-          _buildSectionHeader('TAMPILAN STRUK'),
-          _buildSectionCard([
-            Consumer(builder: (context, ref, _) {
-              final enabled = ref.watch(showStoreNameProvider);
-              return _buildSwitchTile(
-                icon: Icons.storefront,
-                title: 'Nama Toko (Header)',
-                value: enabled,
-                onChanged: (val) async {
-                  await ref.read(settingsRepositoryProvider).setShowStoreName(val);
-                  ref.read(showStoreNameProvider.notifier).state = val;
-                },
-              );
-            }),
-            const Divider(height: 1, color: Color(0xFFEDEEEF)),
-            Consumer(builder: (context, ref, _) {
-              final enabled = ref.watch(showAddressProvider);
-              return _buildSwitchTile(
-                icon: Icons.place,
-                title: 'Alamat & HP (Header)',
-                value: enabled,
-                onChanged: (val) async {
-                  await ref.read(settingsRepositoryProvider).setShowAddress(val);
-                  ref.read(showAddressProvider.notifier).state = val;
-                },
-              );
-            }),
-            const Divider(height: 1, color: Color(0xFFEDEEEF)),
-            Consumer(builder: (context, ref, _) {
-              final enabled = ref.watch(showLogoProvider);
-              final logoPath = ref.watch(logoPathProvider);
-              return Column(
-                children: [
-                  _buildSwitchTile(
-                    icon: Icons.image,
-                    title: 'Logo',
-                    value: enabled,
-                    onChanged: (val) async {
-                      await ref.read(settingsRepositoryProvider).setShowLogo(val);
-                      ref.read(showLogoProvider.notifier).state = val;
-                    },
-                  ),
-                  if (enabled) ...[
-                    const Divider(height: 1, color: Color(0xFFEDEEEF)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: Row(
-                        children: [
-                          logoPath != null 
-                            ? ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.file(File(logoPath), width: 40, height: 40, fit: BoxFit.cover))
-                            : Container(width: 40, height: 40, decoration: BoxDecoration(color: const Color(0xFFF8F9FA), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.image_not_supported, color: Color(0xFFBCCAC0))),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('File Logo', style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF191C1D))),
-                                logoPath != null 
-                                  ? Text(path.basename(logoPath), style: const TextStyle(fontFamily: 'Space Mono', fontSize: 12, color: Color(0xFF6D7A72)), overflow: TextOverflow.ellipsis) 
-                                  : const Text('Belum ada logo', style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 12, color: Color(0xFFBA1A1A))),
-                              ],
-                            ),
-                          ),
-                          if (logoPath != null)
-                            IconButton(icon: const Icon(Icons.delete_outline, color: Color(0xFFBA1A1A)), onPressed: _removeLogo),
-                          IconButton(icon: const Icon(Icons.upload_file, color: Color(0xFF006948)), onPressed: _pickLogo),
-                        ],
-                      ),
+          if (isAdmin) ...[
+            _buildSectionHeader('TAMPILAN STRUK'),
+            _buildSectionCard([
+              Consumer(builder: (context, ref, _) {
+                final enabled = ref.watch(showStoreNameProvider);
+                return _buildSwitchTile(
+                  icon: Icons.storefront,
+                  title: 'Nama Toko (Header)',
+                  value: enabled,
+                  onChanged: (val) async {
+                    await ref.read(settingsRepositoryProvider).setShowStoreName(val);
+                    ref.read(showStoreNameProvider.notifier).state = val;
+                  },
+                );
+              }),
+              const Divider(height: 1, color: Color(0xFFEDEEEF)),
+              Consumer(builder: (context, ref, _) {
+                final enabled = ref.watch(showAddressProvider);
+                return _buildSwitchTile(
+                  icon: Icons.place,
+                  title: 'Alamat & HP (Header)',
+                  value: enabled,
+                  onChanged: (val) async {
+                    await ref.read(settingsRepositoryProvider).setShowAddress(val);
+                    ref.read(showAddressProvider.notifier).state = val;
+                  },
+                );
+              }),
+              const Divider(height: 1, color: Color(0xFFEDEEEF)),
+              Consumer(builder: (context, ref, _) {
+                final enabled = ref.watch(showLogoProvider);
+                final logoPath = ref.watch(logoPathProvider);
+                return Column(
+                  children: [
+                    _buildSwitchTile(
+                      icon: Icons.image,
+                      title: 'Logo',
+                      value: enabled,
+                      onChanged: (val) async {
+                        await ref.read(settingsRepositoryProvider).setShowLogo(val);
+                        ref.read(showLogoProvider.notifier).state = val;
+                      },
                     ),
-                  ]
-                ],
-              );
-            }),
-            const Divider(height: 1, color: Color(0xFFEDEEEF)),
-            Consumer(builder: (context, ref, _) {
-              final footer = ref.watch(storeFooterProvider);
-              return _buildListTile(
-                icon: Icons.text_fields,
-                title: 'Pesan Kaki (Footer)',
-                subtitle: footer,
-                onTap: () => _showEditDialog(
-                  title: 'Pesan Kaki',
-                  initialValue: footer,
-                  provider: storeFooterProvider,
-                  onSave: (val) => ref.read(settingsRepositoryProvider).setStoreFooter(val),
-                ),
-              );
-            }),
-          ]),
+                    if (enabled) ...[
+                      const Divider(height: 1, color: Color(0xFFEDEEEF)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Row(
+                          children: [
+                            logoPath != null 
+                              ? ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.file(File(logoPath), width: 40, height: 40, fit: BoxFit.cover))
+                              : Container(width: 40, height: 40, decoration: BoxDecoration(color: const Color(0xFFF8F9FA), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.image_not_supported, color: Color(0xFFBCCAC0))),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('File Logo', style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF191C1D))),
+                                  logoPath != null 
+                                    ? Text(path.basename(logoPath), style: const TextStyle(fontFamily: 'Space Mono', fontSize: 12, color: Color(0xFF6D7A72)), overflow: TextOverflow.ellipsis) 
+                                    : const Text('Belum ada logo', style: TextStyle(fontFamily: 'Plus Jakarta Sans', fontSize: 12, color: Color(0xFFBA1A1A))),
+                                ],
+                              ),
+                            ),
+                            if (logoPath != null)
+                              IconButton(icon: const Icon(Icons.delete_outline, color: Color(0xFFBA1A1A)), onPressed: _removeLogo),
+                            IconButton(icon: const Icon(Icons.upload_file, color: Color(0xFF006948)), onPressed: _pickLogo),
+                          ],
+                        ),
+                      ),
+                    ]
+                  ],
+                );
+              }),
+              const Divider(height: 1, color: Color(0xFFEDEEEF)),
+              Consumer(builder: (context, ref, _) {
+                final footer = ref.watch(storeFooterProvider);
+                return _buildListTile(
+                  icon: Icons.text_fields,
+                  title: 'Pesan Kaki (Footer)',
+                  subtitle: footer,
+                  onTap: () => _showEditDialog(
+                    title: 'Pesan Kaki',
+                    initialValue: footer,
+                    provider: storeFooterProvider,
+                    onSave: (val) => ref.read(settingsRepositoryProvider).setStoreFooter(val),
+                  ),
+                );
+              }),
+            ]),
+          ],
 
-          _buildSectionHeader('TRANSAKSI'),
+          if (isAdmin) ...[
+            _buildSectionHeader('TRANSAKSI'),
           _buildSectionCard([
             Consumer(
               builder: (context, ref, _) {
@@ -512,8 +517,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               },
             ),
           ]),
+          ],
 
-          _buildSectionHeader('PEMBAYARAN DIGITAL'),
+          if (isAdmin) ...[
+            _buildSectionHeader('PEMBAYARAN DIGITAL'),
           _buildSectionCard([
             Consumer(
               builder: (context, ref, _) {
@@ -614,10 +621,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               },
             ),
           ]),
+          ],
 
           _buildSectionHeader('KASIR & AKUN'),
           _buildSectionCard([
-            Consumer(builder: (context, ref, _) {
+            if (isAdmin) ...[
+              Consumer(builder: (context, ref, _) {
               final cashiersCount = ref.watch(cashierListProvider);
               return ListTile(
                 leading: Container(
@@ -642,8 +651,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageCashiersScreen()));
                 },
               );
-            }),
-            const Divider(height: 1, color: Color(0xFFEDEEEF)),
+              }),
+              const Divider(height: 1, color: Color(0xFFEDEEEF)),
+            ],
             _buildListTile(
               icon: Icons.pin,
               title: 'Ganti PIN',
@@ -697,7 +707,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               },
             ),
             const Divider(height: 1, color: Color(0xFFEDEEEF)),
-            _buildListTile(
+            if (isAdmin) ...[
+              _buildListTile(
               icon: Icons.settings_backup_restore,
               title: 'Restore Database',
               subtitle: 'Ganti data dengan file backup',
@@ -777,6 +788,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               },
             ),
             const Divider(height: 1, color: Color(0xFFEDEEEF)),
+            ],
             _buildListTile(
               icon: Icons.info,
               title: 'Versi App',

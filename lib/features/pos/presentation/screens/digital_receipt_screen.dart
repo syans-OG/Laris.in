@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../settings/data/settings_repository.dart';
 import '../../../../features/transactions/domain/entities/transaction_entity.dart';
 import '../../../../shared/presentation/layouts/master_layout.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../domain/usecases/print_receipt_usecase.dart';
+import '../../../../core/services/printer/receipt_generator.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class DigitalReceiptScreen extends ConsumerStatefulWidget {
@@ -89,6 +91,12 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
       MaterialPageRoute(builder: (_) => const MasterLayout()),
       (route) => false,
     );
+  }
+
+  void _onShareTapped() {
+    final settings = ref.read(settingsRepositoryProvider);
+    final receiptText = ReceiptGenerator.generateTextReceipt(widget.transaction, settings);
+    Share.share(receiptText, subject: 'Struk Laris.in');
   }
 
   Future<void> _onPrintTapped() async {
@@ -221,9 +229,7 @@ class _DigitalReceiptScreenState extends ConsumerState<DigitalReceiptScreen>
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Fitur share segera hadir')),
-                          ),
+                          onPressed: _onShareTapped,
                           icon: const Icon(Icons.share_outlined, size: 18),
                           label: const Text('Bagikan Struk'),
                           style: OutlinedButton.styleFrom(
