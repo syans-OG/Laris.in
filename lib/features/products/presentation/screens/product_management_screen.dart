@@ -7,6 +7,7 @@ import '../widgets/inventory_product_card.dart';
 import '../widgets/import_csv_bottom_sheet.dart';
 import '../widgets/category_management_dialog.dart';
 import '../widgets/stock_adjustment_dialog.dart';
+import '../widgets/product_filter_bottom_sheet.dart';
 import 'product_form_screen.dart';
 
 class ProductManagementScreen extends ConsumerStatefulWidget {
@@ -141,6 +142,8 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final borderColor = theme.colorScheme.outline.withOpacity(isDark ? 0.35 : 0.18);
+    final sortBy = ref.watch(productsSortByProvider);
+    final isFilterActive = sortBy != null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
@@ -149,7 +152,6 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
           Expanded(
             child: Container(
               height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
@@ -164,6 +166,7 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
               ),
               child: Row(
                 children: [
+                  const SizedBox(width: 12),
                   Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
@@ -192,26 +195,50 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: borderColor),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark ? const Color.fromRGBO(0, 0, 0, 0.14) : const Color.fromRGBO(0, 0, 0, 0.03),
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
+          GestureDetector(
+            onTap: () => _showFilterBottomSheet(context),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isFilterActive ? AppColors.primary : theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: isFilterActive ? null : Border.all(color: borderColor),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark ? const Color.fromRGBO(0, 0, 0, 0.14) : const Color.fromRGBO(0, 0, 0, 0.03),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.tune, 
+                  color: isFilterActive ? Colors.white : theme.colorScheme.onSurfaceVariant, 
+                  size: 20,
                 ),
-              ],
-            ),
-            child: Center(
-              child: Icon(Icons.tune, color: theme.colorScheme.onSurfaceVariant, size: 20),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ProductFilterBottomSheet(
+        currentSortBy: ref.read(productsSortByProvider),
+        onApply: (sortBy) {
+          ref.read(productsSortByProvider.notifier).state = sortBy;
+        },
+        onReset: () {
+          ref.read(productsSortByProvider.notifier).state = null;
+        },
       ),
     );
   }

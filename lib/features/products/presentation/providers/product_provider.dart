@@ -5,6 +5,8 @@ import '../../domain/entities/product_entity.dart';
 
 final productsQueryProvider = StateProvider<String>((ref) => '');
 final productsCategoryFilterProvider = StateProvider<int?>((ref) => null);
+final productsSortByProvider = StateProvider<String?>((ref) => null);
+final productsStockFilterProvider = StateProvider<String?>((ref) => null);
 
 final productsProvider = StateNotifierProvider<ProductNotifier, AsyncValue<List<ProductEntity>>>((ref) {
   return ProductNotifier(ref);
@@ -14,19 +16,32 @@ class ProductNotifier extends StateNotifier<AsyncValue<List<ProductEntity>>> {
   final Ref _ref;
 
   ProductNotifier(this._ref) : super(const AsyncValue.loading()) {
-    // Listen to query or category filter changes to auto-reload
-    _ref.listen(productsCategoryFilterProvider, (previous, next) {
-      loadProducts(searchQuery: _ref.read(productsQueryProvider), categoryId: next);
-    });
-
+    _ref.listen(productsCategoryFilterProvider, (_, __) => _reload());
+    _ref.listen(productsQueryProvider, (_, __) => _reload());
+    _ref.listen(productsSortByProvider, (_, __) => _reload());
+    _ref.listen(productsStockFilterProvider, (_, __) => _reload());
     loadProducts();
   }
 
-  Future<void> loadProducts({String? searchQuery, int? categoryId}) async {
+  void _reload() {
+    loadProducts(
+      searchQuery: _ref.read(productsQueryProvider),
+      categoryId: _ref.read(productsCategoryFilterProvider),
+      sortBy: _ref.read(productsSortByProvider),
+      stockFilter: _ref.read(productsStockFilterProvider),
+    );
+  }
+
+  Future<void> loadProducts({String? searchQuery, int? categoryId, String? sortBy, String? stockFilter}) async {
     state = const AsyncValue.loading();
     try {
       final repository = _ref.read(productRepositoryProvider);
-      final products = await repository.getProducts(categoryId: categoryId, searchQuery: searchQuery);
+      final products = await repository.getProducts(
+        categoryId: categoryId,
+        searchQuery: searchQuery,
+        sortBy: sortBy,
+        stockFilter: stockFilter,
+      );
       state = AsyncValue.data(products);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -49,6 +64,8 @@ class ProductNotifier extends StateNotifier<AsyncValue<List<ProductEntity>>> {
       await loadProducts(
         searchQuery: _ref.read(productsQueryProvider),
         categoryId: _ref.read(productsCategoryFilterProvider),
+        sortBy: _ref.read(productsSortByProvider),
+        stockFilter: _ref.read(productsStockFilterProvider),
       );
       // Also refresh logs if any
       _ref.invalidate(stockLogsProvider);
@@ -64,6 +81,8 @@ class ProductNotifier extends StateNotifier<AsyncValue<List<ProductEntity>>> {
       await loadProducts(
         searchQuery: _ref.read(productsQueryProvider),
         categoryId: _ref.read(productsCategoryFilterProvider),
+        sortBy: _ref.read(productsSortByProvider),
+        stockFilter: _ref.read(productsStockFilterProvider),
       );
       _ref.invalidate(stockLogsProvider);
     } catch (e) {
@@ -78,6 +97,8 @@ class ProductNotifier extends StateNotifier<AsyncValue<List<ProductEntity>>> {
       await loadProducts(
         searchQuery: _ref.read(productsQueryProvider),
         categoryId: _ref.read(productsCategoryFilterProvider),
+        sortBy: _ref.read(productsSortByProvider),
+        stockFilter: _ref.read(productsStockFilterProvider),
       );
     } catch (e) {
       rethrow;

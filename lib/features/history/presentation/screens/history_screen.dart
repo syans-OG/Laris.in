@@ -34,6 +34,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     ref.invalidate(historyByCashierProvider);
   }
 
+  Future<void> _showFilterSheet() async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const _HistoryFilterBottomSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final historyState = widget.cashierId != null
@@ -42,6 +50,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final borderColor = theme.colorScheme.outline.withOpacity(isDark ? 0.28 : 0.12);
+    final activeFilter = ref.watch(historyFilterPeriodProvider);
+    final isFilterActive = activeFilter != HistoryFilterPeriod.all;
 
     Widget body = Column(
       children: [
@@ -81,32 +91,35 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       ),
                       prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant, size: 20),
                       border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Container(
-                height: 48,
-                width: 48,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: borderColor),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDark ? const Color.fromRGBO(0, 0, 0, 0.16) : const Color.fromRGBO(0, 0, 0, 0.03),
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.filter_list, color: theme.colorScheme.onSurfaceVariant),
-                  onPressed: () {
-                    // Filter action
-                  },
+              GestureDetector(
+                onTap: _showFilterSheet,
+                child: Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: isFilterActive ? const Color(0xFF006948) : theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: isFilterActive ? null : Border.all(color: borderColor),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark ? const Color.fromRGBO(0, 0, 0, 0.16) : const Color.fromRGBO(0, 0, 0, 0.03),
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.filter_list,
+                    color: isFilterActive ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
@@ -348,6 +361,172 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         ],
       ),
       body: body,
+    );
+  }
+}
+
+// ─── Filter Bottom Sheet ─────────────────────────────────────────────────────
+
+class _HistoryFilterBottomSheet extends ConsumerWidget {
+  const _HistoryFilterBottomSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentPeriod = ref.watch(historyFilterPeriodProvider);
+
+    Future<void> pickCustomRange() async {
+      final now = DateTime.now();
+      final picked = await showDateRangePicker(
+        context: context,
+        firstDate: DateTime(now.year - 5),
+        lastDate: now,
+        builder: (ctx, child) => Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF006948),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Color(0xFF191C1D),
+            ),
+          ),
+          child: child!,
+        ),
+      );
+      if (picked != null) {
+        ref.read(historyFilterDateRangeProvider.notifier).state = DateTimeRange(
+          start: picked.start,
+          end: DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59),
+        );
+        ref.read(historyFilterPeriodProvider.notifier).state = HistoryFilterPeriod.custom;
+        if (context.mounted) Navigator.pop(context);
+      }
+    }
+
+    void setFilter(HistoryFilterPeriod period) {
+      ref.read(historyFilterPeriodProvider.notifier).state = period;
+      if (period != HistoryFilterPeriod.custom) {
+        Navigator.pop(context);
+      }
+    }
+
+    final options = [
+      (HistoryFilterPeriod.all, 'Semua Transaksi', Icons.receipt_long_outlined),
+      (HistoryFilterPeriod.today, 'Hari Ini', Icons.today_outlined),
+      (HistoryFilterPeriod.sevenDays, '7 Hari Terakhir', Icons.date_range_outlined),
+      (HistoryFilterPeriod.thirtyDays, '30 Hari Terakhir', Icons.calendar_month_outlined),
+      (HistoryFilterPeriod.custom, 'Pilih Rentang Tanggal', Icons.tune_outlined),
+    ];
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              height: 4,
+              width: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0E0E0),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Filter Riwayat',
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: Color(0xFF191C1D),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Tampilkan transaksi berdasarkan periode',
+            style: TextStyle(
+              fontFamily: 'Plus Jakarta Sans',
+              fontSize: 13,
+              color: Color(0xFF6D7A72),
+            ),
+          ),
+          const SizedBox(height: 20),
+          ...options.map((opt) {
+            final (period, label, icon) = opt;
+            final isActive = currentPeriod == period;
+            return GestureDetector(
+              onTap: () => period == HistoryFilterPeriod.custom
+                  ? pickCustomRange()
+                  : setFilter(period),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: isActive ? const Color(0xFFE8F5F0) : const Color(0xFFF8F9FA),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isActive ? const Color(0xFF006948) : Colors.transparent,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      icon,
+                      size: 20,
+                      color: isActive ? const Color(0xFF006948) : const Color(0xFF6D7A72),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                          fontSize: 14,
+                          color: isActive ? const Color(0xFF006948) : const Color(0xFF191C1D),
+                        ),
+                      ),
+                    ),
+                    if (isActive)
+                      const Icon(Icons.check_circle, size: 18, color: Color(0xFF006948)),
+                  ],
+                ),
+              ),
+            );
+          }),
+          if (currentPeriod != HistoryFilterPeriod.all) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () {
+                  ref.read(historyFilterPeriodProvider.notifier).state = HistoryFilterPeriod.all;
+                  ref.read(historyFilterDateRangeProvider.notifier).state = null;
+                  Navigator.pop(context);
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text(
+                  'Reset Filter',
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFBA1A1A),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
