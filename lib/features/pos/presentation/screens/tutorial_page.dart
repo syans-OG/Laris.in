@@ -33,15 +33,14 @@ class TutorialPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TutorialSectionCard(
-              title: 'Membuat Akun',
-              imagePath: 'assets/tutorial/create_account.png',
+              title: 'Membuat Kasir Akun',
+              imagePath: 'assets/tutorial/create_account.jpg',
               steps: const [
-                'Buka aplikasi Laris.in',
-                'Tekan tombol "Daftar" pada halaman login',
-                'Isi nama lengkap Anda',
-                'Masukkan email yang valid',
-                'Buat password yang kuat',
-                'Tekan tombol "Daftar" untuk menyelesaikan',
+                'Masuk ke settings, scroll hingga ketemu Kasir & Akun',
+                'Klik Kelola Kasir',
+                'Di halaman, pada pojok kanan bawah, klik tombol tambah (+)',
+                'Isi nama kasir dengan jelas serta pin lalu isi hak akses kasir',
+                'Tekan tombol simpan untuk menyimpan kasir baru',
               ],
             ),
             const SizedBox(height: 16),
