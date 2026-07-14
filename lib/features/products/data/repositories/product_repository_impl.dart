@@ -9,7 +9,7 @@ class ProductRepositoryImpl implements ProductRepository {
   ProductRepositoryImpl(this._db);
 
   @override
-  Future<List<ProductEntity>> getProducts({int? categoryId, String? searchQuery}) async {
+  Future<List<ProductEntity>> getProducts({int? categoryId, String? searchQuery, String? sortBy, String? stockFilter}) async {
     final db = await _db.database;
     
     String query = 'SELECT * FROM products WHERE is_active = 1';
@@ -26,7 +26,35 @@ class ProductRepositoryImpl implements ProductRepository {
       args.addAll([likePattern, likePattern]);
     }
 
-    query += ' ORDER BY name ASC';
+    if (stockFilter != null) {
+      if (stockFilter == 'low') {
+        query += ' AND stock <= low_stock_threshold';
+      } else if (stockFilter == 'out') {
+        query += ' AND stock = 0';
+      } else if (stockFilter == 'available') {
+        query += ' AND stock > 0';
+      }
+    }
+
+    if (sortBy != null) {
+      if (sortBy == 'name_asc') {
+        query += ' ORDER BY name ASC';
+      } else if (sortBy == 'name_desc') {
+        query += ' ORDER BY name DESC';
+      } else if (sortBy == 'price_asc') {
+        query += ' ORDER BY price ASC';
+      } else if (sortBy == 'price_desc') {
+        query += ' ORDER BY price DESC';
+      } else if (sortBy == 'stock_asc') {
+        query += ' ORDER BY stock ASC';
+      } else if (sortBy == 'stock_desc') {
+        query += ' ORDER BY stock DESC';
+      } else {
+        query += ' ORDER BY name ASC';
+      }
+    } else {
+      query += ' ORDER BY name ASC';
+    }
     
     final result = db.select(query, args);
     return result.map((row) => ProductEntity.fromJson(row)).toList();
@@ -120,19 +148,16 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<int> saveProductsBatch(List<ProductEntity> products) async {
     if (products.isEmpty) return 0;
     
-    final db = await _db.database;
     int successCount = 0;
     
-    try {
-      db.execute('BEGIN TRANSACTION');
-      for (final product in products) {
+    for (final product in products) {
+      try {
         await saveProduct(product);
         successCount++;
+      } catch (e) {
+        // Biarkan lanjut ke produk berikutnya jika satu gagal
+        print('Gagal save product batch: $e');
       }
-      db.execute('COMMIT');
-    } catch (e) {
-      db.execute('ROLLBACK');
-      rethrow;
     }
     
     return successCount;

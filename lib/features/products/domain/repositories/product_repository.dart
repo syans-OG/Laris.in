@@ -2,7 +2,7 @@ import '../entities/product_entity.dart';
 import '../entities/stock_log_entity.dart';
 
 abstract class ProductRepository {
-  Future<List<ProductEntity>> getProducts({int? categoryId, String? searchQuery});
+  Future<List<ProductEntity>> getProducts({int? categoryId, String? searchQuery, String? sortBy, String? stockFilter});
   Future<ProductEntity?> getProductById(int id);
   Future<ProductEntity?> getProductByBarcode(String barcode);
   Future<void> saveProduct(ProductEntity product);
